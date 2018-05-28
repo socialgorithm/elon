@@ -1,30 +1,43 @@
 package track
 
 import (
+	"fmt"
 	"math/rand"
 	"time"
 
 	"github.com/socialgorithm/elon-server/domain"
 )
 
-func genTrack() domain.Track {
+func genTrack(_width int32, _height int32) domain.Track {
 	rand.Seed(time.Now().UnixNano())
 
 	points := 20
-	maxPoints := 100
-	width := int32(1024)
-	height := int32(768)
+	margin := float32(50)
+	maxPoints := 200
+	width := float32(_width)
+	height := float32(_height)
 
-	var pointsLeft = make([]domain.Position, points, maxPoints)
-	var pointsRight = make([]domain.Position, points, maxPoints)
+	var randPoints = make([]domain.Position, points, maxPoints)
 
 	for i := 0; i < points; i++ {
-		pointsLeft = append(pointsLeft, domain.Position{X: float32(rand.Int31n(width)), Y: float32(rand.Int31n(height))})
-		pointsRight = append(pointsRight, domain.Position{X: float32(rand.Int31n(width)), Y: float32(rand.Int31n(height))})
+		x := rand.Float32()*(width-margin) + margin
+		y := rand.Float32()*(height-margin) + margin
+		fmt.Println(x, y)
+		randPoints = append(
+			randPoints,
+			domain.Position{
+				X: x,
+				Y: y,
+			},
+		)
 	}
 
+	fmt.Println(randPoints)
+
+	firstSide := findConvexHull(randPoints)
+
 	return domain.Track{
-		FirstSide:  pointsLeft,
-		SecondSide: pointsRight,
+		FirstSide:  firstSide,
+		SecondSide: firstSide,
 	}
 }
