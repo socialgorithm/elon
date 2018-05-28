@@ -24,3 +24,9 @@ type Sensor struct {
 	Angle    int8
 	Distance float32
 }
+
+// Track represents a track that can be traversed by cars
+type Track struct {
+	FirstSide  []Position
+	SecondSide []Position
+}
