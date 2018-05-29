@@ -1,6 +1,7 @@
 package track
 
 import (
+	"fmt"
 	"math"
 	"math/rand"
 	"time"
@@ -16,12 +17,16 @@ const margin = float32(100)
 const roadWidth = float64(30)
 
 func genTrack(width int32, height int32) domain.Track {
-	return offset(
+	start := time.Now()
+	track := offset(
 		//addCurvesToTrack(
 		genInitialConvexTrack(width, height),
 		//),
 		roadWidth,
 	)
+	elapsed := time.Since(start)
+	fmt.Printf("Track Generated in: %s", elapsed)
+	return track
 }
 
 // Add one point between every 2 points in the track, and displace it away from
