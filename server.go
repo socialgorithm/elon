@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -12,13 +13,13 @@ import (
 )
 
 var upgrader = websocket.Upgrader{}
-var track domain.Track
-var carStateEmitter <-chan domain.CarState
+var simulation simulator.Simulation
 
 func main() {
 	log.Println("Starting Elon Server")
-	track, carStateEmitter, _ = simulator.StartSimulation()
-	render.Render(track, carStateEmitter)
+	simulation = simulator.StartSimulation()
+	fmt.Println("done starting simulation")
+	render.Render(simulation)
 	http.HandleFunc("/simulate", newSimulationHandler)
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
@@ -31,9 +32,8 @@ func newSimulationHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer connection.Close()
 
-	_, carStateEmitter, carControlReceiver := simulator.StartSimulation()
-	go writeStateUpdatesToConnection(carStateEmitter, connection)
-	go writeControlUpdatesToReceiver(connection, carControlReceiver)
+	go writeStateUpdatesToConnection(simulation.CarStateEmitter, connection)
+	go writeControlUpdatesToReceiver(connection, simulation.CarControlStateReceiver)
 }
 
 func writeStateUpdatesToConnection(carStateChannel <-chan domain.CarState, connection *websocket.Conn) {

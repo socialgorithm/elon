@@ -4,19 +4,31 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/socialgorithm/elon-server/simulator"
+
 	"github.com/socialgorithm/elon-server/domain"
 
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/pixelgl"
 )
 
-var carStateChannel <-chan domain.CarState
-var trackObj domain.Track
+var simulation simulator.Simulation
+var carState domain.CarState
+
+func update() {
+	for {
+		select {
+		case updatedCarState := <-simulation.CarStateEmitter:
+			carState = updatedCarState
+			fmt.Printf("received car state %f\n", carState.Position.X)
+		}
+	}
+}
 
 func run() {
 	cfg := pixelgl.WindowConfig{
 		Title:  "Elon Self Driving - Socialgorithm",
-		Bounds: pixel.R(0, 0, width, height),
+		Bounds: pixel.R(0, 0, simulation.Track.Width, simulation.Track.Height),
 		VSync:  true,
 	}
 	win, err := pixelgl.NewWindow(cfg)
@@ -29,7 +41,7 @@ func run() {
 		second = time.Tick(time.Second)
 	)
 
-	trackRender := renderTrack(trackObj)
+	trackRender := renderTrack(simulation.Track)
 
 	for !win.Closed() {
 		win.Clear(bgColor)
@@ -37,6 +49,11 @@ func run() {
 		trackRender.Draw(win)
 
 		// update cars
+		if carState.Position.X != 0 {
+			carRender := renderCar(carState)
+			carRender.Draw(win)
+		}
+
 		win.Update()
 
 		frames++
@@ -50,8 +67,8 @@ func run() {
 }
 
 // Render initiates the render loop
-func Render(_trackObj domain.Track, _carStateChannel <-chan domain.CarState) {
-	trackObj = _trackObj
-	carStateChannel = _carStateChannel
+func Render(_simulation simulator.Simulation) {
+	simulation = _simulation
 	pixelgl.Run(run)
+	go update()
 }

@@ -2,19 +2,29 @@ package simulator
 
 import (
 	"log"
+	"math/rand"
+	"runtime"
 	"time"
 
 	"github.com/socialgorithm/elon-server/domain"
 	"github.com/socialgorithm/elon-server/track"
 )
 
-//Starts a simulation, returning state and control channels
-func StartSimulation() (domain.Track, <-chan domain.CarState, chan<- domain.CarControlState) {
-	track := track.GenTrack(1024, 768)
+var simulation Simulation
+
+// StartSimulation Starts a simulation, returning state and control channels
+func StartSimulation() Simulation {
+	track := track.GenTrack()
 	carControlStateChannel := make(chan domain.CarControlState)
 	carStateChannel := startCarStateStream(track)
-	return track, carStateChannel, carControlStateChannel
+	return Simulation{
+		Track:                   track,
+		CarStateEmitter:         carStateChannel,
+		CarControlStateReceiver: carControlStateChannel,
+	}
 }
+
+// simulation ticks
 
 func startCarStateStream(track domain.Track) <-chan domain.CarState {
 	carStateChannel := make(chan domain.CarState)
@@ -23,6 +33,7 @@ func startCarStateStream(track domain.Track) <-chan domain.CarState {
 			log.Println("Generating new car state")
 			carStateChannel <- genRandomCarState()
 			time.Sleep(time.Second)
+			runtime.Gosched()
 		}
 	}()
 
@@ -31,7 +42,7 @@ func startCarStateStream(track domain.Track) <-chan domain.CarState {
 
 func genRandomCarState() domain.CarState {
 	return domain.CarState{
-		Position: domain.Position{X: 1.0, Y: 1.0},
+		Position: domain.Position{X: rand.Float64() * 1024, Y: rand.Float64() * 740},
 		Velocity: 1,
 		Sensors: []domain.Sensor{
 			domain.Sensor{Angle: 1, Distance: 1},

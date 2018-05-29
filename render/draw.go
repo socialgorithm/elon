@@ -4,6 +4,8 @@ import (
 	"image/color"
 	"math"
 
+	"golang.org/x/image/colornames"
+
 	"github.com/faiface/pixel"
 	imdraw "github.com/faiface/pixel/imdraw"
 	"github.com/socialgorithm/elon-server/domain"
@@ -24,6 +26,18 @@ func renderTrack(track domain.Track) *imdraw.IMDraw {
 	drawDashedLine(trackRender, track.Center, centerLineColor, 1)
 
 	return trackRender
+}
+
+func renderCar(carState domain.CarState) *imdraw.IMDraw {
+	carRender := imdraw.New(nil)
+
+	carRender.Color = colornames.Peru
+	carRender.Push(
+		pixel.V(carState.Position.X, carState.Position.Y),
+	)
+	carRender.Circle(10, 0)
+
+	return carRender
 }
 
 func drawLine(draw *imdraw.IMDraw, points []domain.Position, color color.RGBA, thickness float64) *imdraw.IMDraw {

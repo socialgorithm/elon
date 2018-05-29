@@ -16,6 +16,8 @@ func offset(track domain.Track, offsetDistance float64) domain.Track {
 		Center:    track.Center,
 		InnerSide: innerCoords,
 		OuterSide: outerCoords,
+		Width:     width,
+		Height:    height,
 	}
 }
 

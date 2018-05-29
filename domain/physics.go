@@ -30,4 +30,7 @@ type Track struct {
 	InnerSide []Position
 	OuterSide []Position
 	Center    []Position
+
+	Width  float64
+	Height float64
 }

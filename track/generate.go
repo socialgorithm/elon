@@ -11,11 +11,11 @@ import (
 )
 
 // GenTrack generates a track within the given width/height
-func GenTrack(width int32, height int32) domain.Track {
+func GenTrack() domain.Track {
 	start := time.Now()
 	track := offset(
 		//addCurvesToTrack(
-		genInitialConvexTrack(width, height),
+		genInitialConvexTrack(),
 		//),
 		roadWidth,
 	)
@@ -56,11 +56,11 @@ func addCurves(points []domain.Position) []domain.Position {
 }
 
 // Use random points and the convex hull algorithm to get the initial set of points
-func genInitialConvexTrack(_width int32, _height int32) domain.Track {
+func genInitialConvexTrack() domain.Track {
 	rand.Seed(time.Now().UnixNano())
 
-	width := float64(_width) - margin
-	height := float64(_height) - margin
+	usableWidth := width - margin
+	usableHeight := height - margin
 
 	points := rand.Intn(maxPoints-minPoints) + minPoints
 	randPoints := make([]domain.Position, points, points)
@@ -69,8 +69,8 @@ func genInitialConvexTrack(_width int32, _height int32) domain.Track {
 		x := float64(0)
 		y := float64(0)
 		for x == 0 || y == 0 {
-			x = rand.Float64()*(width-margin) + margin
-			y = rand.Float64()*(height-margin) + margin
+			x = rand.Float64()*(usableWidth-margin) + margin
+			y = rand.Float64()*(usableHeight-margin) + margin
 		}
 		randPoints[i] = domain.Position{
 			X: x,
