@@ -47,8 +47,8 @@ func drawLine(draw *imdraw.IMDraw, points []domain.Position, color color.RGBA, t
 
 		draw.Color = color
 		draw.Push(
-			pixel.V(float64(pointA.X), float64(pointA.Y)),
-			pixel.V(float64(pointB.X), float64(pointB.Y)),
+			pixel.V(pointA.X, pointA.Y),
+			pixel.V(pointB.X, pointB.Y),
 		)
 		draw.Line(thickness)
 	}
