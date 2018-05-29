@@ -29,4 +29,7 @@ type Sensor struct {
 type Track struct {
 	FirstSide  []Position
 	SecondSide []Position
+
+	// just to render helpers, remove at some point
+	RandomPoints []Position
 }

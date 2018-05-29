@@ -11,35 +11,61 @@ import (
 	"golang.org/x/image/colornames"
 )
 
-const lineThickness = 3
+const lineThickness = 2
+const radius = 5
 const width = 1024
 const height = 768
 
 func drawTrack(track domain.Track) *imdraw.IMDraw {
 
 	trackRender := imdraw.New(nil)
-	trackRender.Color = pixel.RGB(1, 0, 0)
 
 	for i := 0; i < len(track.FirstSide)-1; i++ {
 		pointA := track.FirstSide[i]
 		pointB := track.FirstSide[i+1]
+		// figure out why we have some 0
+		if pointA.X == 0 || pointA.Y == 0 || pointB.X == 0 || pointB.Y == 0 {
+			continue
+		}
+		trackRender.Color = colornames.Orange
+		trackRender.Push(
+			pixel.V(float64(pointA.X), float64(pointA.Y)),
+		)
+		trackRender.Circle(radius, 0)
+
+		trackRender.Color = colornames.Gray
 		trackRender.Push(
 			pixel.V(float64(pointA.X), float64(pointA.Y)),
 			pixel.V(float64(pointB.X), float64(pointB.Y)),
 		)
 		trackRender.Line(lineThickness)
 	}
-	trackRender.Color = pixel.RGB(0, 0, 1)
 
-	// for i := 0; i < len(track.SecondSide)-1; i = i + 2 {
-	// 	pointA := track.SecondSide[i]
-	// 	pointB := track.SecondSide[i+1]
-	// 	trackRender.Push(
-	// 		pixel.V(float64(pointA.X), float64(pointA.Y)),
-	// 		pixel.V(float64(pointB.X), float64(pointB.Y)),
-	// 	)
-	// 	trackRender.Line(lineThickness)
-	// }
+	// draw random points
+	trackRender.Color = colornames.Whitesmoke
+	for i := 0; i < len(track.RandomPoints); i++ {
+		point := track.RandomPoints[i]
+		trackRender.Push(
+			pixel.V(float64(point.X), float64(point.Y)),
+		)
+		trackRender.Circle(radius, 0)
+	}
+
+	// Draw second side
+	trackRender.Color = colornames.Wheat
+	for i := 0; i < len(track.SecondSide)-1; i++ {
+		pointA := track.SecondSide[i]
+		pointB := track.SecondSide[i+1]
+		// figure out why we have some 0
+		if pointA.X == 0 || pointA.Y == 0 || pointB.X == 0 || pointB.Y == 0 {
+			continue
+		}
+		trackRender.Push(
+			pixel.V(float64(pointA.X), float64(pointA.Y)),
+			pixel.V(float64(pointB.X), float64(pointB.Y)),
+		)
+		trackRender.Line(lineThickness)
+	}
 
 	return trackRender
 }
