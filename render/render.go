@@ -4,10 +4,14 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/socialgorithm/elon-server/domain"
+
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/pixelgl"
-	"github.com/socialgorithm/elon-server/track"
 )
+
+var carStateChannel <-chan domain.CarState
+var trackObj domain.Track
 
 func run() {
 	cfg := pixelgl.WindowConfig{
@@ -25,12 +29,14 @@ func run() {
 		second = time.Tick(time.Second)
 	)
 
-	trackObj := track.GenTrack(width, height)
 	trackRender := renderTrack(trackObj)
 
 	for !win.Closed() {
 		win.Clear(bgColor)
+		// redraw the track
 		trackRender.Draw(win)
+
+		// update cars
 		win.Update()
 
 		frames++
@@ -43,6 +49,9 @@ func run() {
 	}
 }
 
-func Render() {
+// Render initiates the render loop
+func Render(_trackObj domain.Track, _carStateChannel <-chan domain.CarState) {
+	trackObj = _trackObj
+	carStateChannel = _carStateChannel
 	pixelgl.Run(run)
 }

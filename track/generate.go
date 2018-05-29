@@ -62,7 +62,8 @@ func genInitialConvexTrack(_width int32, _height int32) domain.Track {
 	width := float64(_width) - margin
 	height := float64(_height) - margin
 
-	var randPoints = [points]domain.Position{}
+	points := rand.Intn(maxPoints-minPoints) + minPoints
+	randPoints := make([]domain.Position, points, points)
 
 	for i := 0; i < points; i++ {
 		x := float64(0)
@@ -77,7 +78,7 @@ func genInitialConvexTrack(_width int32, _height int32) domain.Track {
 		}
 	}
 
-	center := findConvexHull(randPoints[0:len(randPoints)])
+	center := findConvexHull(randPoints)
 
 	return domain.Track{
 		Center: center,
