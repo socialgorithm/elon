@@ -11,7 +11,7 @@ import (
 
 func drawTrack(track domain.Track) *imdraw.IMDraw {
 	trackRender := imdraw.New(nil)
-	// draw sides
+
 	drawPolygon(trackRender, track.SecondSide, colornames.Gray)
 	drawPolygon(trackRender, track.FirstSide, colornames.Green)
 	drawLine(trackRender, track.FirstSide, colornames.White)
