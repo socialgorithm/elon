@@ -11,3 +11,24 @@ go get github.com/go-gl/glfw/v3.2/glfw
 go get github.com/go-gl/gl/v3.3-core/gl
 go get github.com/go-gl/mathgl/mgl32
 ```
+
+### GEOS
+
+You'll need the C library GEOS (used for some geometry calculations)
+
+After installing it (see below), get `gogeos`:
+
+```
+$ go get github.com/paulsmith/gogeos/geos
+```
+
+#### Ubuntu
+
+```
+$ apt-get install libgeos-dev
+```
+#### OS X - homebrew
+
+```
+$ brew install geos
+```

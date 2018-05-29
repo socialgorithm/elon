@@ -10,16 +10,17 @@ import (
 )
 
 const points = 50
-const difficulty = float64(0.3) // closer to 0 will create sharper turns, exponentially
-const maxDisplacement = float64(100)
+const difficulty = float64(0.2) // closer to 0 will create sharper turns, exponentially
+const maxDisplacement = float64(200)
 const margin = float32(100)
-const roadWidth = float32(30)
+const roadWidth = float64(30)
 
 func genTrack(width int32, height int32) domain.Track {
-	return getSecondSideAsOffset(
-		addCurvesToTrack(
-			genInitialConvexTrack(width, height),
-		),
+	return offset(
+		//addCurvesToTrack(
+		genInitialConvexTrack(width, height),
+		//),
+		roadWidth,
 	)
 }
 
@@ -28,32 +29,11 @@ func genTrack(width int32, height int32) domain.Track {
 // This should create some left/right turns and make it more challenging
 func addCurvesToTrack(track domain.Track) domain.Track {
 	firstSide := addCurves(track.FirstSide)
-	secondSide := addCurves(track.SecondSide)
+	secondSide := track.SecondSide
 
 	return domain.Track{
-		FirstSide:    firstSide,
-		SecondSide:   secondSide,
-		RandomPoints: track.RandomPoints,
-	}
-}
-
-// Offset the first side of the track by a set amount to get the second
-// side of the track
-func getSecondSideAsOffset(track domain.Track) domain.Track {
-	firstSide := track.FirstSide
-	secondSide := make([]domain.Position, len(firstSide), len(firstSide))
-
-	for i := 0; i < len(firstSide); i++ {
-		secondSide[i] = domain.Position{
-			X: firstSide[i].X + roadWidth,
-			Y: firstSide[i].Y + roadWidth,
-		}
-	}
-
-	return domain.Track{
-		FirstSide:    firstSide,
-		SecondSide:   secondSide,
-		RandomPoints: track.RandomPoints,
+		FirstSide:  firstSide,
+		SecondSide: secondSide,
 	}
 }
 
@@ -81,8 +61,8 @@ func addCurves(points []domain.Position) []domain.Position {
 func genInitialConvexTrack(_width int32, _height int32) domain.Track {
 	rand.Seed(time.Now().UnixNano())
 
-	width := float32(_width)
-	height := float32(_height)
+	width := float32(_width) - margin
+	height := float32(_height) - margin
 
 	var randPoints = [points]domain.Position{}
 
@@ -102,8 +82,7 @@ func genInitialConvexTrack(_width int32, _height int32) domain.Track {
 	firstSide := findConvexHull(randPoints[0:len(randPoints)])
 
 	return domain.Track{
-		FirstSide:    firstSide,
-		SecondSide:   firstSide,
-		RandomPoints: randPoints[0 : len(randPoints)-1],
+		FirstSide:  firstSide,
+		SecondSide: firstSide,
 	}
 }
