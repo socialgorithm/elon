@@ -8,11 +8,12 @@ import (
 	"github.com/socialgorithm/elon-server/track"
 )
 
-func StartSimulation() (<-chan domain.CarState, chan<- domain.CarControlState) {
-	track := track.GenTrack()
+//Starts a simulation, returning state and control channels
+func StartSimulation() (domain.Track, <-chan domain.CarState, chan<- domain.CarControlState) {
+	track := track.GenTrack(1024, 768)
 	carControlStateChannel := make(chan domain.CarControlState)
 	carStateChannel := startCarStateStream(track)
-	return carStateChannel, carControlStateChannel
+	return track, carStateChannel, carControlStateChannel
 }
 
 func startCarStateStream(track domain.Track) <-chan domain.CarState {

@@ -7,13 +7,18 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/socialgorithm/elon-server/domain"
+	"github.com/socialgorithm/elon-server/render"
 	"github.com/socialgorithm/elon-server/simulator"
 )
 
 var upgrader = websocket.Upgrader{}
+var track domain.Track
+var carStateEmitter <-chan domain.CarState
 
 func main() {
 	log.Println("Starting Elon Server")
+	track, carStateEmitter, _ = simulator.StartSimulation()
+	render.Render(track, carStateEmitter)
 	http.HandleFunc("/simulate", newSimulationHandler)
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
@@ -26,9 +31,9 @@ func newSimulationHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer connection.Close()
 
-	carControlUpdates, carStateUpdates, err := simulator.StartSimulation()
-	go writeStateUpdatesToConnection(carStateUpdates, connection)
-	go writeControlUpdatesToEngine(connection, carControlUpdates)
+	_, carStateEmitter, carControlReceiver := simulator.StartSimulation()
+	go writeStateUpdatesToConnection(carStateEmitter, connection)
+	go writeControlUpdatesToReceiver(connection, carControlReceiver)
 }
 
 func writeStateUpdatesToConnection(carStateChannel <-chan domain.CarState, connection *websocket.Conn) {
@@ -40,7 +45,7 @@ func writeStateUpdatesToConnection(carStateChannel <-chan domain.CarState, conne
 	}
 }
 
-func writeControlUpdatesToEngine(connection *websocket.Conn, carControlStateChannel chan<- domain.CarControlState) {
+func writeControlUpdatesToReceiver(connection *websocket.Conn, carControlStateChannel chan<- domain.CarControlState) {
 	defer close(carControlStateChannel)
 	for {
 		_, message, err := connection.ReadMessage()

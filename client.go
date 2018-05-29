@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	u := url.URL{Scheme: "ws", Host: "localhost:8080", Path: "/drive"}
+	u := url.URL{Scheme: "ws", Host: "localhost:8080", Path: "/simulate"}
 	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
 	if err != nil {
 		log.Fatal("dial:", err)
