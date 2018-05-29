@@ -43,7 +43,6 @@ func run() {
 	}
 }
 
-// Main Render a track
-func Main() {
+func Render() {
 	pixelgl.Run(run)
 }
