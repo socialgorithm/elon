@@ -7,6 +7,6 @@ import (
 // Simulation represents the current simulation
 type Simulation struct {
 	Track                   domain.Track
-	CarStateEmitter         <-chan domain.CarState
+	CarStatesChannel        chan []domain.CarState
 	CarControlStateReceiver chan<- domain.CarControlState
 }

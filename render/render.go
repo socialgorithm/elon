@@ -13,14 +13,13 @@ import (
 )
 
 var simulation simulator.Simulation
-var carState domain.CarState
+var carStates []domain.CarState
 
 func update() {
 	for {
 		select {
-		case updatedCarState := <-simulation.CarStateEmitter:
-			carState = updatedCarState
-			fmt.Printf("received car state %f\n", carState.Position.X)
+		case updatedCarStates := <-simulation.CarStatesChannel:
+			carStates = updatedCarStates
 		}
 	}
 }
@@ -36,6 +35,8 @@ func run() {
 		panic(err)
 	}
 
+	win.SetSmooth(true)
+
 	var (
 		frames = 0
 		second = time.Tick(time.Second)
@@ -49,9 +50,11 @@ func run() {
 		trackRender.Draw(win)
 
 		// update cars
-		if carState.Position.X != 0 {
-			carRender := renderCar(carState)
-			carRender.Draw(win)
+		if len(carStates) > 0 {
+			for i := 0; i < len(carStates); i++ {
+				carRender := renderCar(carStates[i])
+				carRender.Draw(win)
+			}
 		}
 
 		win.Update()
@@ -69,6 +72,6 @@ func run() {
 // Render initiates the render loop
 func Render(_simulation simulator.Simulation) {
 	simulation = _simulation
-	pixelgl.Run(run)
 	go update()
+	pixelgl.Run(run)
 }

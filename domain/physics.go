@@ -1,5 +1,11 @@
 package domain
 
+// Car represents each car in the simulation
+type Car struct {
+	CarControlState CarControlState
+	CarState        CarState
+}
+
 // CarControlState represents a command to alter the behaviour of a car
 type CarControlState struct {
 	Throttle float64
@@ -8,9 +14,11 @@ type CarControlState struct {
 
 // CarState represents the current reportable state of a car
 type CarState struct {
-	Position Position
-	Velocity float64
-	Sensors  []Sensor
+	Position  Position
+	Direction Position // normalized vector
+	Velocity  float64
+	Sensors   []Sensor
+	Crashed   bool
 }
 
 // Position represents an (X, Y) position
@@ -21,7 +29,7 @@ type Position struct {
 
 // Sensor represents the current state of a sensor
 type Sensor struct {
-	Angle    int8
+	Angle    float64 // radians [0, 2 * pi]
 	Distance float64
 }
 
