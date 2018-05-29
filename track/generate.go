@@ -10,7 +10,7 @@ import (
 	"github.com/socialgorithm/elon-server/domain"
 )
 
-func genTrack(width int32, height int32) domain.Track {
+func GenTrack(width int32, height int32) domain.Track {
 	start := time.Now()
 	track := offset(
 		//addCurvesToTrack(

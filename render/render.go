@@ -1,4 +1,4 @@
-package track
+package render
 
 import (
 	"fmt"
@@ -6,6 +6,7 @@ import (
 
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/pixelgl"
+	"github.com/socialgorithm/elon-server/track"
 )
 
 func run() {
@@ -24,8 +25,8 @@ func run() {
 		second = time.Tick(time.Second)
 	)
 
-	track := genTrack(width, height)
-	trackRender := drawTrack(track)
+	trackObj := track.GenTrack(width, height)
+	trackRender := renderTrack(trackObj)
 
 	for !win.Closed() {
 		win.Clear(bgColor)

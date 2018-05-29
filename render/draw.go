@@ -1,4 +1,4 @@
-package track
+package render
 
 import (
 	"image/color"
@@ -9,7 +9,7 @@ import (
 	"github.com/socialgorithm/elon-server/domain"
 )
 
-func drawTrack(track domain.Track) *imdraw.IMDraw {
+func renderTrack(track domain.Track) *imdraw.IMDraw {
 	trackRender := imdraw.New(nil)
 
 	// Draw road
