@@ -29,7 +29,7 @@ type Position struct {
 
 // Sensor represents the current state of a sensor
 type Sensor struct {
-	Angle    float64 // radians [0, 2 * pi]
+	Angle    float64 // radians [0, 2 * pi], 0 means looking straight ahead of the car
 	Distance float64
 }
 

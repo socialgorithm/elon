@@ -31,11 +31,69 @@ func renderTrack(track domain.Track) *imdraw.IMDraw {
 func renderCar(carState domain.CarState) *imdraw.IMDraw {
 	carRender := imdraw.New(nil)
 
-	carRender.Color = colornames.Peru
+	posVector := pixel.V(carState.Position.X, carState.Position.Y)
+	dirVector := pixel.V(carState.Direction.X, carState.Direction.Y)
+	rotation := pixel.Matrix.Rotated(pixel.IM, posVector, dirVector.Angle())
+
+	carRender.SetMatrix(rotation)
+
+	// render car fill
+	carRender.Color = carColor
 	carRender.Push(
-		pixel.V(carState.Position.X, carState.Position.Y),
+		pixel.V(carState.Position.X-carWidth/2, carState.Position.Y),
+		pixel.V(carState.Position.X+carWidth/2, carState.Position.Y+carLength),
 	)
-	carRender.Circle(10, 0)
+	carRender.Rectangle(0)
+
+	// render car outline
+	carRender.Color = colornames.Black
+	carRender.Push(
+		pixel.V(carState.Position.X-carWidth/2, carState.Position.Y),
+		pixel.V(carState.Position.X+carWidth/2, carState.Position.Y+carLength),
+	)
+	carRender.Rectangle(1)
+
+	// render sensors
+	// carRender.Color = colornames.Orange
+	// for i := 0; i < len(carState.Sensors); i++ {
+	// 	sensor := carState.Sensors[i]
+	// 	sensorVector := pixel.V(
+	// 		carState.Position.X-carWidth/2,
+	// 		carState.Position.Y,
+	// 	).
+	// 	carRender.Push(
+	// 		pixel.V(carState.Position.X-carWidth/2, carState.Position.Y),
+	// 		pixel.V(sensorVector.X, sensorVector.Y),
+	// 	)
+	// 	carRender.Line(1)
+	// }
+
+	// render wheels
+	carRender.Color = colornames.Black
+	// top left
+	carRender.Push(
+		pixel.V(carState.Position.X-carWidth/2, carState.Position.Y+wheelOffset),
+		pixel.V(carState.Position.X-carWidth/2, carState.Position.Y+wheelOffset+wheelLength),
+	)
+	carRender.Line(wheelWidth)
+	// top right
+	carRender.Push(
+		pixel.V(carState.Position.X+carWidth/2, carState.Position.Y+wheelOffset),
+		pixel.V(carState.Position.X+carWidth/2, carState.Position.Y+wheelOffset+wheelLength),
+	)
+	carRender.Line(wheelWidth)
+	// bottom left
+	carRender.Push(
+		pixel.V(carState.Position.X-carWidth/2, carState.Position.Y+carLength-wheelOffset),
+		pixel.V(carState.Position.X-carWidth/2, carState.Position.Y+carLength-wheelOffset-wheelLength),
+	)
+	carRender.Line(wheelWidth)
+	// bottom right
+	carRender.Push(
+		pixel.V(carState.Position.X+carWidth/2, carState.Position.Y+carLength-wheelOffset),
+		pixel.V(carState.Position.X+carWidth/2, carState.Position.Y+carLength-wheelOffset-wheelLength),
+	)
+	carRender.Line(wheelWidth)
 
 	return carRender
 }

@@ -39,7 +39,10 @@ func genRandomCarState() []domain.CarState {
 		Direction: domain.Position{X: rand.Float64(), Y: rand.Float64()},
 		Velocity:  1,
 		Sensors: []domain.Sensor{
-			domain.Sensor{Angle: 1, Distance: 1},
+			domain.Sensor{
+				Angle:    rand.Float64(),
+				Distance: rand.Float64() * 20,
+			},
 		},
 	}
 	return carStates
