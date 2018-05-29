@@ -10,6 +10,7 @@ import (
 	"github.com/socialgorithm/elon-server/domain"
 )
 
+// GenTrack generates a track within the given width/height
 func GenTrack(width int32, height int32) domain.Track {
 	start := time.Now()
 	track := offset(
