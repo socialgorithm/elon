@@ -6,13 +6,7 @@ import (
 
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/pixelgl"
-	"golang.org/x/image/colornames"
 )
-
-const lineThickness = 2
-const radius = 5
-const width = 1024
-const height = 768
 
 func run() {
 	cfg := pixelgl.WindowConfig{
@@ -34,7 +28,7 @@ func run() {
 	trackRender := drawTrack(track)
 
 	for !win.Closed() {
-		win.Clear(colornames.Green)
+		win.Clear(bgColor)
 		trackRender.Draw(win)
 		win.Update()
 

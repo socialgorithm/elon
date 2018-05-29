@@ -10,12 +10,6 @@ import (
 	"github.com/socialgorithm/elon-server/domain"
 )
 
-const points = 50
-const difficulty = float64(0.2) // closer to 0 will create sharper turns, exponentially
-const maxDisplacement = float64(200)
-const margin = float32(100)
-const roadWidth = float64(30)
-
 func genTrack(width int32, height int32) domain.Track {
 	start := time.Now()
 	track := offset(
@@ -33,12 +27,10 @@ func genTrack(width int32, height int32) domain.Track {
 // that middle by a certain amount.
 // This should create some left/right turns and make it more challenging
 func addCurvesToTrack(track domain.Track) domain.Track {
-	firstSide := addCurves(track.FirstSide)
-	secondSide := track.SecondSide
-
 	return domain.Track{
-		FirstSide:  firstSide,
-		SecondSide: secondSide,
+		Center:    addCurves(track.Center),
+		InnerSide: track.InnerSide,
+		OuterSide: track.OuterSide,
 	}
 }
 
@@ -50,12 +42,12 @@ func addCurves(points []domain.Position) []domain.Position {
 		displacement := math.Pow(rand.Float64(), difficulty) * maxDisplacement
 		dispVector := pixel.Unit(rand.Float64() * math.Pi).Scaled(displacement)
 		rPoints[i*2] = points[i]
-		vectorA := pixel.V(float64(points[i].X), float64(points[i].Y))
-		vectorB := pixel.V(float64(points[i+1].X), float64(points[i+1].Y))
+		vectorA := pixel.V(points[i].X, points[i].Y)
+		vectorB := pixel.V(points[i+1].X, points[i+1].Y)
 		midVector := vectorA.Add(vectorB).Scaled(0.5).Add(dispVector)
 		rPoints[i*2+1] = domain.Position{
-			X: float32(midVector.X),
-			Y: float32(midVector.Y),
+			X: midVector.X,
+			Y: midVector.Y,
 		}
 	}
 
@@ -66,17 +58,17 @@ func addCurves(points []domain.Position) []domain.Position {
 func genInitialConvexTrack(_width int32, _height int32) domain.Track {
 	rand.Seed(time.Now().UnixNano())
 
-	width := float32(_width) - margin
-	height := float32(_height) - margin
+	width := float64(_width) - margin
+	height := float64(_height) - margin
 
 	var randPoints = [points]domain.Position{}
 
 	for i := 0; i < points; i++ {
-		x := float32(0)
-		y := float32(0)
+		x := float64(0)
+		y := float64(0)
 		for x == 0 || y == 0 {
-			x = rand.Float32()*(width-margin) + margin
-			y = rand.Float32()*(height-margin) + margin
+			x = rand.Float64()*(width-margin) + margin
+			y = rand.Float64()*(height-margin) + margin
 		}
 		randPoints[i] = domain.Position{
 			X: x,
@@ -84,10 +76,9 @@ func genInitialConvexTrack(_width int32, _height int32) domain.Track {
 		}
 	}
 
-	firstSide := findConvexHull(randPoints[0:len(randPoints)])
+	center := findConvexHull(randPoints[0:len(randPoints)])
 
 	return domain.Track{
-		FirstSide:  firstSide,
-		SecondSide: firstSide,
+		Center: center,
 	}
 }
