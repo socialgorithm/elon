@@ -1,4 +1,4 @@
-package track
+package render
 
 import (
 	"fmt"
@@ -6,13 +6,8 @@ import (
 
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/pixelgl"
-	"golang.org/x/image/colornames"
+	"github.com/socialgorithm/elon-server/track"
 )
-
-const lineThickness = 2
-const radius = 5
-const width = 1024
-const height = 768
 
 func run() {
 	cfg := pixelgl.WindowConfig{
@@ -30,11 +25,11 @@ func run() {
 		second = time.Tick(time.Second)
 	)
 
-	track := GenTrack(width, height)
-	trackRender := drawTrack(track)
+	trackObj := track.GenTrack(width, height)
+	trackRender := renderTrack(trackObj)
 
 	for !win.Closed() {
-		win.Clear(colornames.Green)
+		win.Clear(bgColor)
 		trackRender.Draw(win)
 		win.Update()
 
@@ -48,7 +43,6 @@ func run() {
 	}
 }
 
-// Main Render a track
-func Main() {
+func Render() {
 	pixelgl.Run(run)
 }
