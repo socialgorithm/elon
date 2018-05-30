@@ -2,12 +2,14 @@ package simulator
 
 import (
 	"github.com/socialgorithm/elon-server/domain"
+	"github.com/socialgorithm/elon-server/physics"
 )
 
-// Simulation represents the current simulation
+// Simulation represents the current simulation - need car state/control states decoupled
+// as they have different sources
 type Simulation struct {
-	Track       domain.Track
-	Cars        []domain.Car
-	CarsChannel chan []domain.Car
-	Started     bool
+	Track                   domain.Track
+	CarStatesChannel        chan []domain.CarState
+	CarControlStateReceiver chan<- domain.CarControlState
+	Engine                  physics.Engine
 }
