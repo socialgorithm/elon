@@ -11,8 +11,8 @@ import (
 
 var simulation Simulation
 
-// PrepareSimulation Starts a simulation, returning state and control channels
-func PrepareSimulation() Simulation {
+// CreateSimulation creates a new simulation
+func CreateSimulation(count int) Simulation {
 	log.Println("Preparing simulation")
 	track := track.GenTrack()
 	carControlStateChannel := make(chan domain.CarControlState)
@@ -21,12 +21,12 @@ func PrepareSimulation() Simulation {
 		Track:                   track,
 		CarStatesChannel:        carStateChannel,
 		CarControlStateReceiver: carControlStateChannel,
-		Engine:                  physics.NewEngine(track, 5),
+		Engine:                  physics.NewEngine(track, count),
 	}
 }
 
-// StartSimulation starts the physics engine (run this in goroutine to async, don't put in the method)
-func StartSimulation(simulation Simulation) {
+// Start starts the physics engine (run this in goroutine to async, don't put in the method)
+func (simulation Simulation) Start() {
 	log.Println("Starting simulation")
 	for {
 		simulation.CarStatesChannel <- simulation.Engine.Next()
