@@ -1,6 +1,7 @@
 package simulator
 
 import (
+	"math"
 	"math/rand"
 	"runtime"
 	"time"
@@ -36,14 +37,25 @@ func genRandomCarState() []domain.CarState {
 	carStates := make([]domain.CarState, 1, 1)
 	carStates[0] = domain.CarState{
 		Position:  domain.Position{X: rand.Float64() * 1024, Y: rand.Float64() * 740},
-		Direction: domain.Position{X: rand.Float64(), Y: rand.Float64()},
+		Direction: domain.Position{X: rand.Float64() - 0.5, Y: rand.Float64() - 0.5},
 		Velocity:  1,
-		Sensors: []domain.Sensor{
-			domain.Sensor{
-				Angle:    rand.Float64(),
-				Distance: rand.Float64() * 20,
-			},
-		},
+		// using 4 sensors for now
+		Sensors: genRandomSensorData(),
 	}
 	return carStates
+}
+
+func genRandomSensorData() []domain.Sensor {
+	const sensorCount = 4
+	minSensorDistance := 10.0
+	maxSensorDistance := 50.0
+	var sensors [sensorCount + 1]domain.Sensor
+	sensorAngleIncrement := math.Pi / sensorCount
+	for i := 0; i <= sensorCount; i++ {
+		sensors[i] = domain.Sensor{
+			Angle:    -math.Pi/2 + sensorAngleIncrement*float64(i),
+			Distance: rand.Float64()*maxSensorDistance + minSensorDistance,
+		}
+	}
+	return sensors[0:len(sensors)]
 }
