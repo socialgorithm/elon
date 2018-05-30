@@ -9,14 +9,18 @@ import (
 	"github.com/faiface/pixel"
 	imdraw "github.com/faiface/pixel/imdraw"
 	"github.com/socialgorithm/elon-server/domain"
+	trackConst "github.com/socialgorithm/elon-server/track"
 )
 
 func renderTrack(track domain.Track) *imdraw.IMDraw {
 	trackRender := imdraw.New(nil)
 
-	// Draw road
-	drawPolygon(trackRender, track.OuterSide, roadColor)
-	drawPolygon(trackRender, track.InnerSide, bgColor)
+	// Draw road (not working for concave polygons)
+	//drawPolygon(trackRender, track.OuterSide, roadColor)
+	//drawPolygon(trackRender, track.InnerSide, bgColor)
+
+	// Draw track using triangulation
+	//drawTrack(trackRender, track)
 	// Draw outer lines
 	drawLine(trackRender, track.OuterSide, outerLinesColor, lineThickness)
 	drawLine(trackRender, track.InnerSide, outerLinesColor, lineThickness)
@@ -24,8 +28,29 @@ func renderTrack(track domain.Track) *imdraw.IMDraw {
 	drawDashedLine(trackRender, track.OuterSide, segmentColor, lineThickness)
 	drawDashedLine(trackRender, track.InnerSide, segmentColor, lineThickness)
 	drawDashedLine(trackRender, track.Center, centerLineColor, 1)
+	// Draw start
+	drawStart(trackRender, track)
 
 	return trackRender
+}
+
+// draw a line representing the start of the track
+func drawStart(draw *imdraw.IMDraw, track domain.Track) {
+	draw.Color = startLineColor
+	// the line will be drawn in an angle disecting the start & end segments
+	startVec := pixel.V(track.Center[0].X, track.Center[0].Y)
+	first := pixel.V(track.Center[1].X, track.Center[1].Y)
+	last := pixel.V(track.Center[len(track.Center)-2].X, track.Center[len(track.Center)-2].Y)
+	// now get the angle between the first point and the last point
+	vecA := first.Sub(startVec).Unit()
+	vecB := last.Sub(startVec).Unit()
+	angle := math.Acos(vecA.Dot(vecB))
+	lineVec := vecB.Rotated(angle / 2).Scaled(trackConst.RoadWidth)
+	draw.Push(
+		startVec.Add(lineVec),
+		startVec.Sub(lineVec),
+	)
+	draw.Line(5)
 }
 
 func renderCar(carState domain.CarState) *imdraw.IMDraw {
@@ -101,11 +126,10 @@ func renderCar(carState domain.CarState) *imdraw.IMDraw {
 		pixel.V(carState.Position.X+carWidth/2, carState.Position.Y+carLength-wheelOffset-wheelLength),
 	)
 	carRender.Line(wheelWidth)
-
 	return carRender
 }
 
-func drawLine(draw *imdraw.IMDraw, points []domain.Position, color color.RGBA, thickness float64) *imdraw.IMDraw {
+func drawLine(draw *imdraw.IMDraw, points []domain.Position, color color.RGBA, thickness float64) {
 	for i := 0; i < len(points)-1; i++ {
 		pointA := points[i]
 		pointB := points[i+1]
@@ -115,12 +139,11 @@ func drawLine(draw *imdraw.IMDraw, points []domain.Position, color color.RGBA, t
 			pixel.V(pointA.X, pointA.Y),
 			pixel.V(pointB.X, pointB.Y),
 		)
-		draw.Line(thickness)
 	}
-	return draw
+	draw.Line(thickness)
 }
 
-func drawDashedLine(draw *imdraw.IMDraw, points []domain.Position, color color.RGBA, thickness float64) *imdraw.IMDraw {
+func drawDashedLine(draw *imdraw.IMDraw, points []domain.Position, color color.RGBA, thickness float64) {
 	draw.Color = color
 	for i := 0; i < len(points)-1; i++ {
 		pointA := points[i]
@@ -148,17 +171,15 @@ func drawDashedLine(draw *imdraw.IMDraw, points []domain.Position, color color.R
 			segmentStart = segmentEnd.Add(uVector.Scaled(segmentLength))
 		}
 	}
-	return draw
 }
 
-func drawPolygon(draw *imdraw.IMDraw, points []domain.Position, color color.RGBA) *imdraw.IMDraw {
+func drawPolygon(draw *imdraw.IMDraw, points []domain.Position, color color.RGBA) {
 	draw.Color = color
 	for i := 0; i < len(points); i++ {
 		point := points[i]
 		draw.Push(
-			pixel.V(float64(point.X), float64(point.Y)),
+			pixel.V(point.X, point.Y),
 		)
 	}
 	draw.Polygon(0) // filled
-	return draw
 }
