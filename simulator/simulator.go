@@ -1,46 +1,60 @@
 package simulator
 
 import (
+	"log"
 	"math/rand"
-	"runtime"
 	"time"
 
 	"github.com/socialgorithm/elon-server/domain"
 	"github.com/socialgorithm/elon-server/track"
 )
 
-var simulation Simulation
-
-// StartSimulation Starts a simulation, returning state and control channels
-func PrepareSimulation() Simulation {
-	track := track.GenTrack()
-	carControlStateChannel := make(chan domain.CarControlState)
-	carStateChannel := make(chan []domain.CarState, 5)
+// CreateSimulation creates and starts a new simulation with state channels for communication
+func CreateSimulation() Simulation {
+	log.Println("Creating simulation")
 	return Simulation{
-		Track:                   track,
-		CarStatesChannel:        carStateChannel,
-		CarControlStateReceiver: carControlStateChannel,
+		Track:       track.GenTrack(),
+		Cars:        []domain.Car{},
+		CarsChannel: make(chan []domain.Car),
 	}
 }
 
-// StartSimulation starts the physics engine
-func StartSimulation(simulation Simulation) {
-	for {
-		simulation.CarStatesChannel <- genRandomCarState()
-		time.Sleep(time.Second)
-		runtime.Gosched()
+// AddCars the specified number of cars to the simulation
+func AddCars(simulation *Simulation, carCount int) {
+	for i := 0; i < carCount; i++ {
+		simulation.Cars = append(simulation.Cars, domain.Car{})
 	}
 }
 
-func genRandomCarState() []domain.CarState {
-	carStates := make([]domain.CarState, 1, 1)
-	carStates[0] = domain.CarState{
-		Position:  domain.Position{X: rand.Float64() * 1024, Y: rand.Float64() * 740},
-		Direction: domain.Position{X: rand.Float64(), Y: rand.Float64()},
-		Velocity:  1,
-		Sensors: []domain.Sensor{
-			domain.Sensor{Angle: 1, Distance: 1},
-		},
+// StartSimulation starts time within the simulation
+func StartSimulation(simulation *Simulation) {
+	log.Println("Starting simulation")
+	go func() {
+		for {
+			advanceTick(simulation)
+			time.Sleep(time.Second)
+		}
+	}()
+}
+
+func advanceTick(simulation *Simulation) {
+	simulation.Cars = randomizeCarStates(simulation.Cars)
+	simulation.CarsChannel <- simulation.Cars
+}
+
+func randomizeCarStates(cars []domain.Car) []domain.Car {
+	newCars := make([]domain.Car, len(cars))
+	for i := range cars {
+		newCars[i] = domain.Car{
+			CarState: domain.CarState{
+				Position:  domain.Position{X: rand.Float64() * 1024, Y: rand.Float64() * 740},
+				Direction: domain.Position{X: rand.Float64(), Y: rand.Float64()},
+				Velocity:  1,
+				Sensors: []domain.Sensor{
+					domain.Sensor{Angle: 1, Distance: 1},
+				},
+			},
+		}
 	}
-	return carStates
+	return newCars
 }

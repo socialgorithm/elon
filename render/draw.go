@@ -28,12 +28,12 @@ func renderTrack(track domain.Track) *imdraw.IMDraw {
 	return trackRender
 }
 
-func renderCar(carState domain.CarState) *imdraw.IMDraw {
+func renderCar(car domain.Car) *imdraw.IMDraw {
 	carRender := imdraw.New(nil)
 
 	carRender.Color = colornames.Peru
 	carRender.Push(
-		pixel.V(carState.Position.X, carState.Position.Y),
+		pixel.V(car.CarState.Position.X, car.CarState.Position.Y),
 	)
 	carRender.Circle(10, 0)
 

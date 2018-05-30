@@ -1,7 +1,7 @@
 package track
 
 import (
-	"fmt"
+	"log"
 	"math"
 	"math/rand"
 	"time"
@@ -20,7 +20,7 @@ func GenTrack() domain.Track {
 		roadWidth,
 	)
 	elapsed := time.Since(start)
-	fmt.Printf("Track Generated in: %s", elapsed)
+	log.Printf("Track Generated in: %s", elapsed)
 	return track
 }
 
