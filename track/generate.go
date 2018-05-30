@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/faiface/pixel"
+	"github.com/paulsmith/gogeos/geos"
 	"github.com/socialgorithm/elon-server/domain"
 )
 
@@ -63,7 +64,7 @@ func genInitialConvexTrack() domain.Track {
 	usableHeight := height - margin
 
 	points := rand.Intn(maxPoints-minPoints) + minPoints
-	randPoints := make([]domain.Position, points, points)
+	randPoints := make([]*geos.Geometry, points, points)
 
 	for i := 0; i < points; i++ {
 		x := float64(0)
@@ -72,15 +73,16 @@ func genInitialConvexTrack() domain.Track {
 			x = rand.Float64()*(usableWidth-margin) + margin
 			y = rand.Float64()*(usableHeight-margin) + margin
 		}
-		randPoints[i] = domain.Position{
+		randPoints[i], _ = geos.NewPoint(geos.Coord{
 			X: x,
 			Y: y,
-		}
+		})
 	}
 
-	center := findConvexHull(randPoints)
+	geom, _ := geos.NewCollection(geos.MULTIPOINT, randPoints...)
+	hull := geos.Must(geom.ConvexHull())
 
 	return domain.Track{
-		Center: center,
+		Center: getCoords(hull),
 	}
 }

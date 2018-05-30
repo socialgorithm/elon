@@ -12,7 +12,7 @@ import (
 
 var simulation Simulation
 
-// StartSimulation Starts a simulation, returning state and control channels
+// PrepareSimulation Prepares the state for a simulation, returning state and control channels
 func PrepareSimulation() Simulation {
 	track := track.GenTrack()
 	carControlStateChannel := make(chan domain.CarControlState)
@@ -49,11 +49,12 @@ func genRandomSensorData() []domain.Sensor {
 	const sensorCount = 4
 	minSensorDistance := 10.0
 	maxSensorDistance := 50.0
+	sensorArc := math.Pi
 	var sensors [sensorCount + 1]domain.Sensor
-	sensorAngleIncrement := math.Pi / sensorCount
+	sensorAngleIncrement := sensorArc / sensorCount
 	for i := 0; i <= sensorCount; i++ {
 		sensors[i] = domain.Sensor{
-			Angle:    -math.Pi/2 + sensorAngleIncrement*float64(i),
+			Angle:    -sensorArc/2 + sensorAngleIncrement*float64(i),
 			Distance: rand.Float64()*maxSensorDistance + minSensorDistance,
 		}
 	}
