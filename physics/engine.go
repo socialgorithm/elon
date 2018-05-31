@@ -55,9 +55,13 @@ func NewEngine(track domain.Track, count int) {
 		Locks: make([]sync.Mutex, count),
 	}
 
+	centre0 := posToVec2(track.Center[0])
+	centre1 := posToVec2(track.Center[1])
+	startAngle := centre1.Subtract(centre0).Normalise()
+
 	for idx := 0; idx < count; idx++ {
 		engine.State[idx].Crashed = false
-		engine.State[idx].Direction = domain.Position{X: 0, Y: 1}
+		engine.State[idx].Direction = domain.Position{X: startAngle[0], Y: startAngle[1]}
 		engine.State[idx].Position = track.Center[0]
 		engine.State[idx].Sensors = make([]domain.Sensor, 5)
 		engine.State[idx].Velocity = 1
