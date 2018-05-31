@@ -12,12 +12,12 @@ type DistCalc interface {
 }
 
 type distCalcImpl struct {
-	coords  []Vec2
-	nsegs   []Seg
-	psegs   []Seg
-	len     int
-	hdims   Vec2
-	sensors []Seg
+	coords   []Vec2
+	nextSegs []Seg
+	prevSegs []Seg
+	len      int
+	halfDims Vec2
+	sensors  []Seg
 }
 
 type distCalcInstance struct {
@@ -30,32 +30,33 @@ type distCalcInstance struct {
 //  3    0
 //  | -> |      Car corners, -> is forward
 //  2    1
-func newDistCalcInstance(hdims, pos Vec2, angle float64) *distCalcInstance {
+func newDistCalcInstance(halfDims, position Vec2, angle float64) *distCalcInstance {
 	shape := Rect{
-		Vec2{-hdims[0], hdims[1]}.Rotate(angle).Add(pos),
-		Vec2{hdims[0], hdims[1]}.Rotate(angle).Add(pos),
-		Vec2{hdims[0], -hdims[1]}.Rotate(angle).Add(pos),
-		Vec2{-hdims[0], -hdims[1]}.Rotate(angle).Add(pos),
+		Vec2{-halfDims[0], halfDims[1]}.Rotate(angle).Add(position),
+		Vec2{halfDims[0], halfDims[1]}.Rotate(angle).Add(position),
+		Vec2{halfDims[0], -halfDims[1]}.Rotate(angle).Add(position),
+		Vec2{-halfDims[0], -halfDims[1]}.Rotate(angle).Add(position),
 	}
 
-	ld := shape[0].Subtract(shape[3]).Normalise()
-	rd := shape[1].Subtract(shape[2]).Normalise()
+	leftSideProjectionDirection := shape[0].Subtract(shape[3]).Normalise()
+	rightSideProjectionDirection := shape[1].Subtract(shape[2]).Normalise()
 
 	frontProjection := Rect{
-		shape[0].Add(ld.ScalarMultiple(projectionLimit)),
-		shape[1].Add(rd.ScalarMultiple(projectionLimit)),
+		shape[0].Add(leftSideProjectionDirection.ScalarMultiple(projectionLimit)),
+		shape[1].Add(rightSideProjectionDirection.ScalarMultiple(projectionLimit)),
 		shape[1],
 		shape[0],
 	}
 
 	return &distCalcInstance{
-		centre:          pos,
+		centre:          position,
 		front:           Seg{shape[0], shape[1]},
 		shape:           shape,
 		frontProjection: frontProjection,
 	}
 }
 
+// faster p % q where -q < p < q
 func qMod(p, q int) int {
 	if p >= q {
 		return p - q
@@ -68,63 +69,72 @@ func qMod(p, q int) int {
 
 // NewDistCalc creates a new distance calculator
 func NewDistCalc(dims Vec2, paths []Path, sensorRange float64) DistCalc {
-	olen := len(paths)
+	outerLen := len(paths)
 
-	nsegs := make([][]Seg, olen)
-	psegs := make([][]Seg, olen)
+	nextSegs := make([][]Seg, outerLen)
+	prevSegs := make([][]Seg, outerLen)
 
 	total := 0
 
-	for oidx, path := range paths {
-		ilen := len(path)
-		nsegs[oidx] = make([]Seg, ilen)
-		psegs[oidx] = make([]Seg, ilen)
-		total += ilen
+	for outerIdx, path := range paths {
+		innerLength := len(path)
 
-		for iidx, t := range path {
-			nsegs[oidx][iidx][0] = t
-			nsegs[oidx][iidx][1] = path[qMod(iidx+1, ilen)]
-			psegs[oidx][iidx][0] = t
-			nsegs[oidx][iidx][1] = path[qMod(iidx-1, ilen)]
+		// Form corners for a path, have coord in the path, then edges at nextSegs[idx]
+		// and prevSegs[idx]
+		nextSegs[outerIdx] = make([]Seg, innerLength)
+		prevSegs[outerIdx] = make([]Seg, innerLength)
+
+		total += innerLength
+
+		for innerIdx, coord := range path {
+			nextSegs[outerIdx][innerIdx][0] = coord
+			nextSegs[outerIdx][innerIdx][1] = path[qMod(innerIdx+1, innerLength)]
+			prevSegs[outerIdx][innerIdx][0] = coord
+			nextSegs[outerIdx][innerIdx][1] = path[qMod(innerIdx-1, innerLength)]
 		}
 	}
 
-	cnsegs := make([]Seg, total)
-	cpsegs := make([]Seg, total)
+	resultNextSegs := make([]Seg, total)
+	resultPrevSegs := make([]Seg, total)
 	coords := make([]Vec2, total)
 
 	cursor := 0
 
-	for oidx, path := range paths {
-		for iidx := range path {
-			coords[cursor+iidx] = paths[oidx][iidx]
-			cnsegs[cursor+iidx] = nsegs[oidx][iidx]
-			cpsegs[cursor+iidx] = psegs[oidx][iidx]
+	for outerIdx, path := range paths {
+		for innerIdx := range path {
+			coords[cursor+innerIdx] = paths[outerIdx][innerIdx]
+			resultNextSegs[cursor+innerIdx] = nextSegs[outerIdx][innerIdx]
+			resultPrevSegs[cursor+innerIdx] = prevSegs[outerIdx][innerIdx]
 		}
 		cursor += len(path)
 	}
 
-	hdims := dims.ScalarMultiple(0.5)
+	halfDims := dims.ScalarMultiple(0.5)
 
-	hdm := hdims.Magnitude()
-	hdmr := sensorRange / hdm
-	hdma := hdims.ScalarMultiple(hdmr)
+	halfDimsMagnitude := halfDims.Magnitude()
+	halfDimsRatio := sensorRange / halfDimsMagnitude
+	magnitudeAdjustedHalfDims := halfDims.ScalarMultiple(halfDimsRatio)
 
 	sensors := []Seg{
-		Seg{Vec2{-hdims[0], 0}, Vec2{-(hdims[0] + sensorRange), 0}}, // L
-		Seg{Vec2{-hdims[0], hdims[1]}, Vec2{-hdma[0], hdma[1]}},     // LC
-		Seg{Vec2{0, hdims[1]}, Vec2{0, hdims[1] + sensorRange}},     // C
-		Seg{hdims, hdma},                                            // RC
-		Seg{Vec2{hdims[0], 0}, Vec2{hdims[0] + sensorRange, 0}},     // R
+		// Left Side
+		Seg{Vec2{-halfDims[0], 0}, Vec2{-(halfDims[0] + sensorRange), 0}},
+		// Left corner
+		Seg{Vec2{-halfDims[0], halfDims[1]}, Vec2{-magnitudeAdjustedHalfDims[0], magnitudeAdjustedHalfDims[1]}},
+		// Center
+		Seg{Vec2{0, halfDims[1]}, Vec2{0, halfDims[1] + sensorRange}},
+		// Right corner
+		Seg{halfDims, magnitudeAdjustedHalfDims},
+		// Right side
+		Seg{Vec2{halfDims[0], 0}, Vec2{halfDims[0] + sensorRange, 0}},
 	}
 
 	return &distCalcImpl{
-		len:     cursor,
-		coords:  coords,
-		nsegs:   cnsegs,
-		psegs:   cpsegs,
-		hdims:   hdims,
-		sensors: sensors,
+		len:      cursor,
+		coords:   coords,
+		nextSegs: resultNextSegs,
+		prevSegs: resultPrevSegs,
+		halfDims: halfDims,
+		sensors:  sensors,
 	}
 }
 
@@ -139,79 +149,82 @@ func updateMin(min *float64, p Vec2, q *Vec2) {
 
 func (d *distCalcImpl) executeAgainstProjection(c *distCalcInstance) float64 {
 	// TODO: optimise, can prune on various levels e.g velocity range
-	lpr := Seg{c.frontProjection[0], c.frontProjection[3]}
-	rpr := Seg{c.frontProjection[1], c.frontProjection[2]}
+	leftProjectionSide := Seg{c.frontProjection[0], c.frontProjection[3]}
+	rightProjectionSide := Seg{c.frontProjection[1], c.frontProjection[2]}
 
-	min := distanceCap
+	minimum := distanceCap
 
-	for idx, v := range d.coords {
-		if c.frontProjection.Contains(v) {
-			pi := Seg{c.centre, d.psegs[idx][1]}.Intersection(c.front)
-			mi := Seg{c.centre, v}.Intersection(c.front)
-			ni := Seg{c.centre, d.nsegs[idx][1]}.Intersection(c.front)
+	for idx, coord := range d.coords {
+		if c.frontProjection.Contains(coord) {
+			prevIntersect := Seg{c.centre, d.prevSegs[idx][1]}.Intersection(c.front)
+			centreIntersect := Seg{c.centre, coord}.Intersection(c.front)
+			nextIntersect := Seg{c.centre, d.nextSegs[idx][1]}.Intersection(c.front)
 
-			pd := math.Abs(pi.Subtract(d.psegs[idx][1]).MagnitudeSquared())
-			md := math.Abs(mi.Subtract(v).MagnitudeSquared())
-			nd := math.Abs(ni.Subtract(d.nsegs[idx][1]).MagnitudeSquared())
+			prevDist := math.Abs(prevIntersect.Subtract(d.prevSegs[idx][1]).MagnitudeSquared())
+			midDist := math.Abs(centreIntersect.Subtract(coord).MagnitudeSquared())
+			nextDist := math.Abs(nextIntersect.Subtract(d.nextSegs[idx][1]).MagnitudeSquared())
 
-			if md <= pd && md <= nd {
+			// TODO: investigate fast way to do point -> line shortest path rather than approximation here
+			// (for cases 2/3)
+
+			if midDist <= prevDist && midDist <= nextDist {
 				// Target is minimum
-				min = math.Min(min, md)
+				minimum = math.Min(minimum, midDist)
 				continue
-			} else if pd < nd && pd < md {
+			} else if prevDist < nextDist && prevDist < midDist {
 				// Previous is minimum, edge check
-				lpin := d.psegs[idx].Intersection(lpr)
-				rpin := d.psegs[idx].Intersection(rpr)
+				leftPrevIntersect := d.prevSegs[idx].Intersection(leftProjectionSide)
+				rightPrevIntersect := d.prevSegs[idx].Intersection(rightProjectionSide)
 
-				updateMin(&min, c.shape[0], lpin)
-				updateMin(&min, c.shape[1], rpin)
+				updateMin(&minimum, c.shape[0], leftPrevIntersect)
+				updateMin(&minimum, c.shape[1], rightPrevIntersect)
 			} else {
 				// Next is minimum, edge check
-				lnin := d.nsegs[idx].Intersection(lpr)
-				rnin := d.nsegs[idx].Intersection(rpr)
+				leftNextIntersect := d.nextSegs[idx].Intersection(leftProjectionSide)
+				rightNextIntersect := d.nextSegs[idx].Intersection(rightProjectionSide)
 
-				updateMin(&min, c.shape[0], lnin)
-				updateMin(&min, c.shape[1], rnin)
+				updateMin(&minimum, c.shape[0], leftNextIntersect)
+				updateMin(&minimum, c.shape[1], rightNextIntersect)
 			}
 		} else {
 			// Edge (nxt)
-			li := d.nsegs[idx].Intersection(lpr)
-			ri := d.nsegs[idx].Intersection(rpr)
+			leftIntersect := d.nextSegs[idx].Intersection(leftProjectionSide)
+			rightIntersect := d.nextSegs[idx].Intersection(rightProjectionSide)
 
-			updateMin(&min, c.shape[0], li)
-			updateMin(&min, c.shape[1], ri)
+			updateMin(&minimum, c.shape[0], leftIntersect)
+			updateMin(&minimum, c.shape[1], rightIntersect)
 		}
 	}
 
-	return math.Sqrt(min)
+	return math.Sqrt(minimum)
 }
 
 func normaliseAngle(a float64) float64 {
 	return a - (twoPi * math.Floor(a/twoPi))
 }
 
-func (d *distCalcImpl) Execute(pos Vec2, angle float64) (float64, []float64) {
-	na := normaliseAngle(angle)
-	i := newDistCalcInstance(d.hdims, pos, na)
+func (d *distCalcImpl) Execute(position Vec2, angle float64) (float64, []float64) {
+	correctedAngle := normaliseAngle(angle)
+	instance := newDistCalcInstance(d.halfDims, position, correctedAngle)
 
-	p := d.executeAgainstProjection(i)
+	collisionDistance := d.executeAgainstProjection(instance)
 
-	sr := make([]float64, len(d.sensors))
+	sensorAngles := make([]float64, len(d.sensors))
 
-	for idx, s := range d.sensors {
-		ns0 := s[0].Rotate(na).Add(pos)
-		ns1 := s[1].Rotate(na).Add(pos)
-		ns := Seg{ns0, ns1}
+	for idx, sensor := range d.sensors {
+		sensorPoint0 := sensor[0].Rotate(correctedAngle).Add(position)
+		sensorPoint1 := sensor[1].Rotate(correctedAngle).Add(position)
+		sensorSegment := Seg{sensorPoint0, sensorPoint1}
 
-		min := distanceCap
+		minimum := distanceCap
 
-		for _, seg := range d.nsegs {
-			d := ns.Intersection(seg)
-			updateMin(&min, s[0], d)
+		for _, seg := range d.nextSegs {
+			sensorIntersect := sensorSegment.Intersection(seg)
+			updateMin(&minimum, sensor[0], sensorIntersect)
 		}
 
-		sr[idx] = min
+		sensorAngles[idx] = minimum
 	}
 
-	return p, sr
+	return collisionDistance, sensorAngles
 }

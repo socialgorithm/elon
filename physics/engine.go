@@ -31,17 +31,17 @@ func posToVec2(pos domain.Position) Vec2 {
 	return Vec2{pos.X, pos.Y}
 }
 
-func posSliceToPath(ps []domain.Position) Path {
-	r := make(Path, len(ps))
-	for i, p := range ps {
-		r[i] = posToVec2(p)
+func posSliceToPath(positions []domain.Position) Path {
+	res := make(Path, len(positions))
+	for idx, position := range positions {
+		res[idx] = posToVec2(position)
 	}
-	return r
+	return res
 }
 
 // NewEngine creates a new physics engine
 func NewEngine(track domain.Track, count int) {
-	e := Engine{
+	engine := Engine{
 		State:        make([]domain.CarState, count),
 		ControlState: make([]domain.CarControlState, count),
 		DistCalc: NewDistCalc(
@@ -55,21 +55,21 @@ func NewEngine(track domain.Track, count int) {
 		Locks: make([]sync.Mutex, count),
 	}
 
-	for i := 0; i < count; i++ {
-		e.State[i].Crashed = false
-		e.State[i].Direction = domain.Position{X: 0, Y: 1}
-		e.State[i].Position = track.Center[0]
-		e.State[i].Sensors = make([]domain.Sensor, 5)
-		e.State[i].Velocity = 1
+	for idx := 0; idx < count; idx++ {
+		engine.State[idx].Crashed = false
+		engine.State[idx].Direction = domain.Position{X: 0, Y: 1}
+		engine.State[idx].Position = track.Center[0]
+		engine.State[idx].Sensors = make([]domain.Sensor, 5)
+		engine.State[idx].Velocity = 1
 
-		e.State[i].Sensors[0].Angle = -(0.5 * math.Pi)
-		e.State[i].Sensors[1].Angle = -dims.Angle()
-		e.State[i].Sensors[2].Angle = 0
-		e.State[i].Sensors[3].Angle = dims.Angle()
-		e.State[i].Sensors[4].Angle = 0.5 * math.Pi
+		engine.State[idx].Sensors[0].Angle = -(0.5 * math.Pi)
+		engine.State[idx].Sensors[1].Angle = -dims.Angle()
+		engine.State[idx].Sensors[2].Angle = 0
+		engine.State[idx].Sensors[3].Angle = dims.Angle()
+		engine.State[idx].Sensors[4].Angle = 0.5 * math.Pi
 
-		for _, s := range e.State[i].Sensors {
-			s.Distance = sensorRange
+		for _, sensor := range engine.State[idx].Sensors {
+			sensor.Distance = sensorRange
 		}
 	}
 }
@@ -100,14 +100,14 @@ func (engine Engine) nextForIndex(idx int) domain.CarState {
 		sensor.Angle = state.Sensors[idx].Angle
 	}
 
-	pv := posToVec2(state.Position)
-	dv := posToVec2(state.Direction)
+	posVec := posToVec2(state.Position)
+	distVec := posToVec2(state.Direction)
 
 	if col < state.Velocity {
-		np := pv.Add(dv.ScalarMultiple(col))
+		newPos := posVec.Add(distVec.ScalarMultiple(col))
 
 		return domain.CarState{
-			Position:  domain.Position{X: np[0], Y: np[1]},
+			Position:  domain.Position{X: newPos[0], Y: newPos[1]},
 			Direction: state.Direction,
 			Velocity:  0,
 			Sensors:   newSensors,
@@ -115,7 +115,7 @@ func (engine Engine) nextForIndex(idx int) domain.CarState {
 		}
 	}
 
-	na := normaliseAngle(dv.Angle() + steeringRate*ctrl.Steering)
+	newAngle := normaliseAngle(distVec.Angle() + steeringRate*ctrl.Steering)
 
 	return domain.CarState{
 		Position: domain.Position{
@@ -123,8 +123,8 @@ func (engine Engine) nextForIndex(idx int) domain.CarState {
 			Y: state.Position.Y + state.Direction.Y*state.Velocity,
 		},
 		Direction: domain.Position{
-			X: math.Cos(na),
-			Y: math.Sin(na),
+			X: math.Cos(newAngle),
+			Y: math.Sin(newAngle),
 		},
 		Velocity: limit(state.Velocity+(ctrl.Throttle*accelRate), 0, maxVelocity),
 		Sensors:  newSensors,
