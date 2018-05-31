@@ -156,6 +156,8 @@ func (d *distCalcImpl) executeAgainstProjection(c *distCalcInstance) float64 {
 
 	for idx, coord := range d.coords {
 		if c.frontProjection.Contains(coord) {
+			// TODO: investigate fast way to do point -> line shortest path with intersection, to replace
+			// the approximation made here
 			prevIntersect := Seg{c.centre, d.prevSegs[idx][1]}.Intersection(c.front)
 			centreIntersect := Seg{c.centre, coord}.Intersection(c.front)
 			nextIntersect := Seg{c.centre, d.nextSegs[idx][1]}.Intersection(c.front)
@@ -163,9 +165,6 @@ func (d *distCalcImpl) executeAgainstProjection(c *distCalcInstance) float64 {
 			prevDist := math.Abs(prevIntersect.Subtract(d.prevSegs[idx][1]).MagnitudeSquared())
 			midDist := math.Abs(centreIntersect.Subtract(coord).MagnitudeSquared())
 			nextDist := math.Abs(nextIntersect.Subtract(d.nextSegs[idx][1]).MagnitudeSquared())
-
-			// TODO: investigate fast way to do point -> line shortest path rather than approximation here
-			// (for cases 2/3)
 
 			if midDist <= prevDist && midDist <= nextDist {
 				// Target is minimum
@@ -176,6 +175,9 @@ func (d *distCalcImpl) executeAgainstProjection(c *distCalcInstance) float64 {
 				leftPrevIntersect := d.prevSegs[idx].Intersection(leftProjectionSide)
 				rightPrevIntersect := d.prevSegs[idx].Intersection(rightProjectionSide)
 
+				// N.B for these we don't care if there is no intersection with the forward
+				// projection edge as every point within the projection is checked so will
+				// be covered in a different iteration
 				updateMin(&minimum, c.shape[0], leftPrevIntersect)
 				updateMin(&minimum, c.shape[1], rightPrevIntersect)
 			} else {
