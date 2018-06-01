@@ -39,7 +39,7 @@ func (v0 Vec2) Subtract(v1 Vec2) Vec2 {
 
 // CrossProduct returns the cross product between the vector and a vector v1
 func (v0 Vec2) CrossProduct(v1 Vec2) float64 {
-	return v0[0]*v1[1] - v0[1] - v1[0]
+	return v0[0]*v1[1] - v0[1]*v1[0]
 }
 
 // DotProduct returns the dot product between the vector and vector v1
