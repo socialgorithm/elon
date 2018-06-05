@@ -15,14 +15,10 @@ var upgrader = websocket.Upgrader{}
 var simulation simulator.Simulation
 
 func main() {
-	log.Println("Starting Elon Server")
-	simulation = simulator.CreateSimulation(5)
-	go simulation.Start()
-
+	port := "8080"
+	log.Printf("Starting Elon Server on localhost:%s", port)
 	http.HandleFunc("/", connectionHandler)
-	go http.ListenAndServe(":8080", nil)
-
-	render.Render(simulation)
+	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
 
 func connectionHandler(w http.ResponseWriter, r *http.Request) {
@@ -45,14 +41,16 @@ func connectionHandler(w http.ResponseWriter, r *http.Request) {
 
 		switch message[0] {
 		case "init":
-			_, err := strconv.Atoi(message[1])
+			carCount, err := strconv.Atoi(message[1])
 			if err != nil {
 				log.Println("Error:", err)
 				break
 			}
+			simulation = simulator.CreateSimulation(carCount)
 			break
 		case "start":
 			go simulation.Start()
+			render.Render(simulation)
 		}
 	}
 }
