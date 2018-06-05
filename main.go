@@ -17,7 +17,7 @@ var simulation simulator.Simulation
 func main() {
 	log.Println("Starting Elon Server")
 	simulation = simulator.CreateSimulation(5)
-	go simulator.Start()
+	go simulation.Start()
 
 	http.HandleFunc("/", connectionHandler)
 	go http.ListenAndServe(":8080", nil)
@@ -45,14 +45,14 @@ func connectionHandler(w http.ResponseWriter, r *http.Request) {
 
 		switch message[0] {
 		case "init":
-			carCount, err := strconv.Atoi(message[1])
+			_, err := strconv.Atoi(message[1])
 			if err != nil {
 				log.Println("Error:", err)
 				break
 			}
 			break
 		case "start":
-			go simulator.Start()
+			go simulation.Start()
 		}
 	}
 }

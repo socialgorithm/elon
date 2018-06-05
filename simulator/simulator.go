@@ -15,13 +15,11 @@ var simulation Simulation
 func CreateSimulation(count int) Simulation {
 	log.Println("Preparing simulation")
 	track := track.GenTrack()
-	carControlStateChannel := make(chan domain.CarControlState)
-	carStateChannel := make(chan []domain.CarState, 5)
 	return Simulation{
-		Track:                   track,
-		CarStatesChannel:        carStateChannel,
-		CarControlStateReceiver: carControlStateChannel,
-		Engine:                  physics.NewEngine(track, count),
+		Track:       track,
+		Cars:        []domain.Car{},
+		CarsChannel: make(chan []domain.Car),
+		Engine:      physics.NewEngine(track, count),
 	}
 }
 
@@ -29,7 +27,7 @@ func CreateSimulation(count int) Simulation {
 func (simulation Simulation) Start() {
 	log.Println("Starting simulation")
 	for {
-		simulation.CarStatesChannel <- simulation.Engine.Next()
+		simulation.CarsChannel <- simulation.Engine.Next()
 		time.Sleep(time.Second)
 	}
 }
