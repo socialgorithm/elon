@@ -2,6 +2,7 @@ package simulator
 
 import (
 	"log"
+	"math/rand"
 	"time"
 
 	"github.com/socialgorithm/elon-server/domain"
@@ -24,9 +25,17 @@ func CreateSimulation(carCount int) *Simulation {
 }
 
 // Start starts the physics engine (run this in goroutine to async, don't put in the method)
-func (simulation Simulation) Start() {
+func (simulation Simulation) Start(testMode bool) {
 	log.Println("Starting simulation")
 	for {
+		if testMode {
+			for idx := range simulation.Engine.State {
+				simulation.Engine.SetCtrl(
+					idx,
+					domain.CarControlState{Throttle: rand.Float64(), Steering: rand.Float64()},
+				)
+			}
+		}
 		simulation.CarsChannel <- simulation.Engine.Next()
 		time.Sleep(time.Second)
 	}

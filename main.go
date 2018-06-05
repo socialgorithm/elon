@@ -20,7 +20,7 @@ func main() {
 	simulation = simulator.CreateSimulation(1)
 
 	if *test {
-		go simulation.Start()
+		go simulation.Start(*test)
 	}
 
 	log.Printf("Starting Elon Server on localhost:%s", *port)
@@ -50,7 +50,7 @@ func connectionHandler(w http.ResponseWriter, r *http.Request) {
 
 		switch message[0] {
 		case "start":
-			go simulation.Start()
+			go simulation.Start(false)
 		}
 	}
 }
