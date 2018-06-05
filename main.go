@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"net/http"
 	"strings"
@@ -14,12 +15,17 @@ var upgrader = websocket.Upgrader{}
 var simulation *simulator.Simulation
 
 func main() {
-	port := "8080"
+	var port = flag.String("port", "8080", "the port number to run on")
+	var test = flag.Bool("test", true, "whether the server should run in test mode")
 	simulation = simulator.CreateSimulation(1)
 
-	log.Printf("Starting Elon Server on localhost:%s", port)
+	if *test {
+		go simulation.Start()
+	}
+
+	log.Printf("Starting Elon Server on localhost:%s", *port)
 	http.HandleFunc("/", connectionHandler)
-	go http.ListenAndServe(":"+port, nil)
+	go http.ListenAndServe(":"+*port, nil)
 
 	render.Render(simulation)
 }

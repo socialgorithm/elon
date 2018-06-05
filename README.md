@@ -32,3 +32,11 @@ $ apt-get install libgeos-dev
 ```
 $ brew install geos
 ```
+
+## Running
+
+To start the server:
+
+`go run main.go`
+
+By default the server runs in "test" mode, which spawns a simulation with 1 car and starts running the simulation clock.
