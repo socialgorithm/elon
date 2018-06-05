@@ -13,7 +13,7 @@ import (
 	"github.com/faiface/pixel/pixelgl"
 )
 
-var simulation simulator.Simulation
+var simulation *simulator.Simulation
 var cars []domain.Car
 
 func update() {
@@ -71,7 +71,7 @@ func run() {
 }
 
 // Render initiates the render loop
-func Render(_simulation simulator.Simulation) {
+func Render(_simulation *simulator.Simulation) {
 	log.Println("Rendering simulation")
 	simulation = _simulation
 	go update()

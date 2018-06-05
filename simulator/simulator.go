@@ -12,14 +12,14 @@ import (
 var simulation Simulation
 
 // CreateSimulation creates a new simulation
-func CreateSimulation(count int) Simulation {
+func CreateSimulation(carCount int) *Simulation {
 	log.Println("Preparing simulation")
 	track := track.GenTrack()
-	return Simulation{
+	return &Simulation{
 		Track:       track,
-		Cars:        []domain.Car{},
+		Cars:        make([]domain.Car, carCount),
 		CarsChannel: make(chan []domain.Car),
-		Engine:      physics.NewEngine(track, count),
+		Engine:      physics.NewEngine(track, carCount),
 	}
 }
 

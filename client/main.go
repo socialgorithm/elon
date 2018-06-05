@@ -17,7 +17,17 @@ func main() {
 	}
 	defer connection.Close()
 
-	connection.WriteMessage(websocket.TextMessage, []byte("init 5"))
-
+	log.Println("Write start message")
 	connection.WriteMessage(websocket.TextMessage, []byte("start"))
+
+	log.Println("Closing connection")
+	err = connection.WriteMessage(
+		websocket.CloseMessage,
+		websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""),
+	)
+
+	if err != nil {
+		log.Println("Close Error:", err)
+		return
+	}
 }

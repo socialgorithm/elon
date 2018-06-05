@@ -3,7 +3,6 @@ package main
 import (
 	"log"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"github.com/gorilla/websocket"
@@ -12,13 +11,17 @@ import (
 )
 
 var upgrader = websocket.Upgrader{}
-var simulation simulator.Simulation
+var simulation *simulator.Simulation
 
 func main() {
 	port := "8080"
+	simulation = simulator.CreateSimulation(1)
+
 	log.Printf("Starting Elon Server on localhost:%s", port)
 	http.HandleFunc("/", connectionHandler)
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+	go http.ListenAndServe(":"+port, nil)
+
+	render.Render(simulation)
 }
 
 func connectionHandler(w http.ResponseWriter, r *http.Request) {
@@ -40,17 +43,8 @@ func connectionHandler(w http.ResponseWriter, r *http.Request) {
 		message := strings.Split(messageStr, " ")
 
 		switch message[0] {
-		case "init":
-			carCount, err := strconv.Atoi(message[1])
-			if err != nil {
-				log.Println("Error:", err)
-				break
-			}
-			simulation = simulator.CreateSimulation(carCount)
-			break
 		case "start":
 			go simulation.Start()
-			render.Render(simulation)
 		}
 	}
 }
