@@ -5,14 +5,12 @@ import (
 )
 
 const (
-	sensorRange      = 5
-	xDim             = 4
-	yDim             = 6
-	xHDim            = 0.5 * xDim
-	yHDim            = 0.5 * yDim
-	steeringRate     = 0.05
-	accelerationRate = 0.05
-	maxSpeed         = 1
+	xHDim = 0.5 * xDim
+	yHDim = 0.5 * yDim
+)
+
+var (
+	sqrtMaxFloat64 = math.Sqrt(math.MaxFloat64)
 )
 
 var (
@@ -65,10 +63,6 @@ type State struct {
 func (s State) Check(p [][2][2]float64) (bool, float64, [5]float64) {
 	sin := math.Sin(s.Angle)
 	cos := math.Cos(s.Angle)
-	rot := [2][2]float64{
-		{cos, -sin},
-		{sin, cos},
-	}
 	rect := [2][2]float64{
 		{dimsRect[0][0], dimsRect[1][1]},
 		{dimsRect[1][0], dimsRect[1][1] + s.Velocity},
@@ -89,10 +83,9 @@ func (s State) Check(p [][2][2]float64) (bool, float64, [5]float64) {
 	}
 
 	for _, seg := range p {
-		// Effectively rotates the world around the car (leads to cheaper collision checks)
 		act := [2][2]float64{
-			Vec2Subtract(Vec2RotateWithMatrix(seg[0], rot), s.Position),
-			Vec2Subtract(Vec2RotateWithMatrix(seg[1], rot), s.Position),
+			Vec2RotateWithSinAndCos(Vec2Subtract(seg[0], s.Position), sin, cos),
+			Vec2RotateWithSinAndCos(Vec2Subtract(seg[1], s.Position), sin, cos),
 		}
 
 		// Collision detection
@@ -131,7 +124,7 @@ func (s State) Check(p [][2][2]float64) (bool, float64, [5]float64) {
 		sns[idx] = math.Sqrt(sv)
 	}
 
-	return mn < math.MaxFloat64, mn, sns
+	return mn < sqrtMaxFloat64, mn, sns
 }
 
 // Update updates a state item for a single tick

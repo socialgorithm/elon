@@ -42,11 +42,11 @@ func Vec2Unit(p [2]float64) [2]float64 {
 	return Vec2Scale(p, 1/Vec2Len(p))
 }
 
-// Vec2RotateWithMatrix rotates a vector with a rotation matrix
-func Vec2RotateWithMatrix(p [2]float64, r [2][2]float64) [2]float64 {
+// Vec2RotateWithSinAndCos rotates a vector given the sin and cos of the angle
+func Vec2RotateWithSinAndCos(p [2]float64, s, c float64) [2]float64 {
 	return [2]float64{
-		p[0]*r[0][0] + p[1]*r[0][1],
-		p[1]*r[0][1] + p[1]*r[1][1],
+		(p[0] * c) - (p[1] * s),
+		(p[0] * s) + (p[1] * c),
 	}
 }
 
