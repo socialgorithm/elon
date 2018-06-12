@@ -8,7 +8,7 @@ import (
 
 // NormaliseRadians normalises radians between 0 and 2Pi
 func NormaliseRadians(t float64) float64 {
-	return t - (TwoPi * math.Floor((t+Pi)/TwoPi))
+	return t - (math.Floor(t/TwoPi) * TwoPi)
 }
 
 // CapValue caps v between min and max

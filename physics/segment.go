@@ -70,6 +70,7 @@ func SegIntersections(l [2][2]float64, m [2][2]float64) [][2]float64 {
 }
 
 // SegIntersects returns whether l and q intersect
+// TODO: deprecate + remove SegIntersects once boolean solution for RectCrosses is available
 func SegIntersects(l [2][2]float64, m [2][2]float64) bool {
 	p := l[0]
 	q := m[0]

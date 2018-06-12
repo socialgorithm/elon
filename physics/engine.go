@@ -19,9 +19,13 @@ type Engine struct {
 
 // NewEngine creates a new physics engine
 func NewEngine(track domain.Track, count int) Engine {
+	ilen := len(track.InnerSide) - 1
+	olen := len(track.OuterSide) - 1
+
 	engine := Engine{
-		state: make([]State, count),
-		locks: make([]sync.Mutex, count),
+		state:    make([]State, count),
+		locks:    make([]sync.Mutex, count),
+		segments: make([][2][2]float64, ilen+olen),
 	}
 
 	centre0 := DPosToVec2(track.Center[0])
@@ -33,6 +37,18 @@ func NewEngine(track domain.Track, count int) Engine {
 		engine.state[idx].Angle = startAngle
 		engine.state[idx].Position = centre0
 		engine.state[idx].Velocity = 1
+		engine.state[idx].Steering = 0
+		engine.state[idx].Throttle = 0
+	}
+
+	for i0, v1 := range track.InnerSide[1:] {
+		v0 := track.InnerSide[i0]
+		engine.segments[i0] = [2][2]float64{DPosToVec2(v0), DPosToVec2(v1)}
+	}
+
+	for i0, v1 := range track.OuterSide[1:] {
+		v0 := track.OuterSide[i0]
+		engine.segments[ilen+i0] = [2][2]float64{DPosToVec2(v0), DPosToVec2(v1)}
 	}
 
 	return engine
