@@ -4,7 +4,10 @@ import (
 	"flag"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
+
+	"github.com/socialgorithm/elon-server/domain"
 
 	"github.com/gorilla/websocket"
 	"github.com/socialgorithm/elon-server/render"
@@ -51,6 +54,16 @@ func connectionHandler(w http.ResponseWriter, r *http.Request) {
 		switch message[0] {
 		case "start":
 			go simulation.Start(false)
+			break
+		case "input":
+			steering, _ := strconv.ParseFloat(message[1], 64)
+			throttle, _ := strconv.ParseFloat(message[2], 64)
+
+			carControlState := domain.CarControlState{
+				Steering: steering,
+				Throttle: throttle,
+			}
+			go simulation.Input(0, carControlState)
 		}
 	}
 }
