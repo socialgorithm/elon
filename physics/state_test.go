@@ -16,7 +16,9 @@ var (
 		Angle:    0.25 * math.Pi,
 		Velocity: 2,
 	}
-	stateSeg = [2][2]float64{{0, 10}, {10, 0}}
+	stateSeg    = [2][2]float64{{0, 10}, {10, 0}}
+	stateSegOut = [2][2]float64{{-10, -10}, {0, -20}}
+	largeSegSet = MakeLargeSegmentSet()
 )
 
 func TestStateCheckWithSingleEdgeInfront(t *testing.T) {
@@ -44,4 +46,29 @@ func BenchmarkStateCheckWithSingleEdgeInfront(b *testing.B) {
 	stateRes = res0
 	stateRes = res1
 	stateRes = res2
+}
+
+func BenchmarkStateCheckWithLargeSegmentSet(b *testing.B) {
+	var res0 bool
+	var res1 float64
+	var res2 [5]float64
+	for i := 0; i < b.N; i++ {
+		res0, res1, res2 = state.Check(largeSegSet)
+	}
+	stateRes = res0
+	stateRes = res1
+	stateRes = res2
+}
+
+func MakeLargeSegmentSet() [][2][2]float64 {
+	o := 5
+	s := 1000
+	r := make([][2][2]float64, s)
+	for i := 0; i < o; i++ {
+		r[i] = stateSeg
+	}
+	for i := o; i < s; i++ {
+		r[i] = stateSegOut
+	}
+	return r
 }
