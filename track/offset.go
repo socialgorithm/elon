@@ -6,14 +6,21 @@ import (
 )
 
 // offsets the track to the sides to make a road
-func offset(track domain.Track, offsetDistance float64) domain.Track {
-	polygon := newPolygon(track.Center)
-	innerSideBuf := geos.Must(polygon.Buffer(-offsetDistance))
-	outerSideBuf := geos.Must(polygon.Buffer(offsetDistance))
+func offset(center []domain.Position, offsetDistance float64) domain.Track {
+	polygon := newPolygon(center)
+	simplified := geos.Must(polygon.Simplify(tolerance))
+	bufferOpts := geos.BufferOpts{
+		QuadSegs:   8,
+		MitreLimit: 5,
+		CapStyle:   geos.CapSquare,
+		JoinStyle:  geos.JoinBevel,
+	}
+	innerSideBuf := geos.Must(simplified.BufferWithOpts(-offsetDistance, bufferOpts))
+	outerSideBuf := geos.Must(simplified.BufferWithOpts(offsetDistance, bufferOpts))
 	innerCoords := getCoords(innerSideBuf)
 	outerCoords := getCoords(outerSideBuf)
 	return domain.Track{
-		Center:    track.Center,
+		Center:    getCoords(simplified),
 		InnerSide: innerCoords,
 		OuterSide: outerCoords,
 		Width:     width,

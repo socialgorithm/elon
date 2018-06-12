@@ -53,7 +53,7 @@ func run() {
 		// update cars
 		if len(cars) > 0 {
 			for i := range cars {
-				carRender := renderCar(cars[i])
+				carRender := renderCar(cars[i].CarState)
 				carRender.Draw(win)
 			}
 		}
