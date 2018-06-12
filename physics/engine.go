@@ -1,166 +1,86 @@
 package physics
 
 import (
-	"math"
 	"sync"
 
 	"github.com/socialgorithm/elon-server/domain"
 )
 
-const (
-	sensorRange  float64 = 2
-	steeringRate float64 = 0.05
-	accelRate    float64 = 0.05
-	maxVelocity  float64 = 5
-)
-
 var (
-	dims  = Vec2{2, 4}
-	ndims = dims.Normalise()
+	sensorAngles = [5]float64{0, 0.5 * Pi, Pi, 1.5 * Pi, 2 * Pi}
 )
 
 // Engine describes a physics engine
 type Engine struct {
-	State        []domain.CarState
-	ControlState []domain.CarControlState
-	Locks        []sync.Mutex
-	DistCalc
-}
-
-func posToVec2(pos domain.Position) Vec2 {
-	return Vec2{pos.X, pos.Y}
-}
-
-func posSliceToPath(positions []domain.Position) Path {
-	res := make(Path, len(positions))
-	for idx, position := range positions {
-		res[idx] = posToVec2(position)
-	}
-	return res
+	state    []State
+	locks    []sync.Mutex
+	segments [][2][2]float64
 }
 
 // NewEngine creates a new physics engine
 func NewEngine(track domain.Track, count int) Engine {
 	engine := Engine{
-		State:        make([]domain.CarState, count),
-		ControlState: make([]domain.CarControlState, count),
-		DistCalc: NewDistCalc(
-			dims,
-			[]Path{
-				posSliceToPath(track.InnerSide),
-				posSliceToPath(track.OuterSide),
-			},
-			sensorRange,
-		),
-		Locks: make([]sync.Mutex, count),
+		state: make([]State, count),
+		locks: make([]sync.Mutex, count),
 	}
 
-	centre0 := posToVec2(track.Center[0])
-	centre1 := posToVec2(track.Center[1])
-	startAngle := centre1.Subtract(centre0).Normalise()
+	centre0 := DPosToVec2(track.Center[0])
+	centre1 := DPosToVec2(track.Center[1])
+	startAngle := Vec2UnitToAngle(Vec2Normalise(Vec2Subtract(centre1, centre0)))
 
 	for idx := 0; idx < count; idx++ {
-		engine.State[idx].Crashed = false
-		engine.State[idx].Direction = domain.Position{X: startAngle[0], Y: startAngle[1]}
-		engine.State[idx].Position = track.Center[0]
-		engine.State[idx].Sensors = make([]domain.Sensor, 5)
-		engine.State[idx].Velocity = 1
-
-		engine.State[idx].Sensors[0].Angle = -(0.5 * math.Pi)
-		engine.State[idx].Sensors[1].Angle = -dims.Angle()
-		engine.State[idx].Sensors[2].Angle = 0
-		engine.State[idx].Sensors[3].Angle = dims.Angle()
-		engine.State[idx].Sensors[4].Angle = 0.5 * math.Pi
-
-		for _, sensor := range engine.State[idx].Sensors {
-			sensor.Distance = sensorRange
-		}
+		engine.state[idx].Crashed = false
+		engine.state[idx].Angle = startAngle
+		engine.state[idx].Position = centre0
+		engine.state[idx].Velocity = 1
 	}
 
 	return engine
 }
 
-// SetCtrl updates the control state for a given index
-func (engine Engine) SetCtrl(idx int, ctrl domain.CarControlState) {
-	engine.Locks[idx].Lock()
-	defer engine.Locks[idx].Unlock()
-	engine.ControlState[idx] = ctrl
-}
-
 func (engine Engine) nextForIndex(idx int) domain.Car {
-	engine.Locks[idx].Lock()
-	defer engine.Locks[idx].Unlock()
+	engine.locks[idx].Lock()
+	defer engine.locks[idx].Unlock()
 
-	state := engine.State[idx]
-	ctrl := engine.ControlState[idx]
+	sv := engine.state[idx].Update(engine.segments)
+	s := engine.state[idx]
+	uv := AngleToUnitVec2(s.Angle)
 
-	if state.Crashed {
-		return domain.Car{
-			CarState:        engine.State[idx],
-			CarControlState: engine.ControlState[idx],
-		}
+	r := domain.CarState{
+		Position:  domain.Position{X: s.Position[0], Y: s.Position[1]},
+		Direction: domain.Position{X: uv[0], Y: uv[1]},
+		Velocity:  s.Velocity,
+		Sensors:   make([]domain.Sensor, 5),
+		Crashed:   false,
 	}
 
-	col, sens := engine.Execute(posToVec2(state.Position), posToVec2(state.Direction).Angle())
-
-	newSensors := make([]domain.Sensor, 5)
-	for idx, sensor := range newSensors {
-		sensor.Distance = sens[idx]
-		sensor.Angle = state.Sensors[idx].Angle
+	for idx, sa := range sensorAngles {
+		r.Sensors[idx].Angle = sa
+		r.Sensors[idx].Distance = sv[idx]
 	}
-
-	posVec := posToVec2(state.Position)
-	distVec := posToVec2(state.Direction)
-
-	if col < state.Velocity {
-		newPos := posVec.Add(distVec.ScalarMultiple(col))
-
-		return domain.Car{
-			CarState: domain.CarState{
-				Position:  domain.Position{X: newPos[0], Y: newPos[1]},
-				Direction: state.Direction,
-				Velocity:  0,
-				Sensors:   newSensors,
-				Crashed:   true,
-			},
-		}
-	}
-
-	newAngle := normaliseAngle(distVec.Angle() + steeringRate*ctrl.Steering)
 
 	return domain.Car{
-		CarState: domain.CarState{
-			Position: domain.Position{
-				X: state.Position.X + state.Direction.X*state.Velocity,
-				Y: state.Position.Y + state.Direction.Y*state.Velocity,
-			},
-			Direction: domain.Position{
-				X: math.Cos(newAngle),
-				Y: math.Sin(newAngle),
-			},
-			Velocity: limit(state.Velocity+(ctrl.Throttle*accelRate), 0, maxVelocity),
-			Sensors:  newSensors,
-			Crashed:  false,
+		CarState: r,
+		CarControlState: domain.CarControlState{
+			Throttle: s.Throttle,
+			Steering: s.Steering,
 		},
 	}
 }
 
+// SetCtrl updates the control state for a given index
+func (engine Engine) SetCtrl(idx int, ctrl domain.CarControlState) {
+	engine.locks[idx].Lock()
+	defer engine.locks[idx].Unlock()
+	engine.state[idx].Throttle = ctrl.Throttle
+	engine.state[idx].Steering = ctrl.Steering
+}
+
 // Next proceeds to the next state
 func (engine Engine) Next() []domain.Car {
-	// TODO: make parallel, is already threadsafe with mutex slice
-	nxt := make([]domain.Car, len(engine.State))
-	for idx := range engine.State {
+	nxt := make([]domain.Car, len(engine.state))
+	for idx := range engine.state {
 		nxt[idx] = engine.nextForIndex(idx)
 	}
 	return nxt
-}
-
-func limit(v, min, max float64) float64 {
-	if v < min {
-		return min
-	}
-	if v > max {
-		return max
-	}
-	return v
 }
