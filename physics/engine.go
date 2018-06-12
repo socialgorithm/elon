@@ -40,7 +40,7 @@ func posSliceToPath(positions []domain.Position) Path {
 }
 
 // NewEngine creates a new physics engine
-func NewEngine(track domain.Track, count int) {
+func NewEngine(track domain.Track, count int) Engine {
 	engine := Engine{
 		State:        make([]domain.CarState, count),
 		ControlState: make([]domain.CarControlState, count),
@@ -76,6 +76,8 @@ func NewEngine(track domain.Track, count int) {
 			sensor.Distance = sensorRange
 		}
 	}
+
+	return engine
 }
 
 // SetCtrl updates the control state for a given index
@@ -85,7 +87,7 @@ func (engine Engine) SetCtrl(idx int, ctrl domain.CarControlState) {
 	engine.ControlState[idx] = ctrl
 }
 
-func (engine Engine) nextForIndex(idx int) domain.CarState {
+func (engine Engine) nextForIndex(idx int) domain.Car {
 	engine.Locks[idx].Lock()
 	defer engine.Locks[idx].Unlock()
 
@@ -93,7 +95,10 @@ func (engine Engine) nextForIndex(idx int) domain.CarState {
 	ctrl := engine.ControlState[idx]
 
 	if state.Crashed {
-		return state
+		return domain.Car{
+			CarState:        engine.State[idx],
+			CarControlState: engine.ControlState[idx],
+		}
 	}
 
 	col, sens := engine.Execute(posToVec2(state.Position), posToVec2(state.Direction).Angle())
@@ -110,36 +115,40 @@ func (engine Engine) nextForIndex(idx int) domain.CarState {
 	if col < state.Velocity {
 		newPos := posVec.Add(distVec.ScalarMultiple(col))
 
-		return domain.CarState{
-			Position:  domain.Position{X: newPos[0], Y: newPos[1]},
-			Direction: state.Direction,
-			Velocity:  0,
-			Sensors:   newSensors,
-			Crashed:   true,
+		return domain.Car{
+			CarState: domain.CarState{
+				Position:  domain.Position{X: newPos[0], Y: newPos[1]},
+				Direction: state.Direction,
+				Velocity:  0,
+				Sensors:   newSensors,
+				Crashed:   true,
+			},
 		}
 	}
 
 	newAngle := normaliseAngle(distVec.Angle() + steeringRate*ctrl.Steering)
 
-	return domain.CarState{
-		Position: domain.Position{
-			X: state.Position.X + state.Direction.X*state.Velocity,
-			Y: state.Position.Y + state.Direction.Y*state.Velocity,
+	return domain.Car{
+		CarState: domain.CarState{
+			Position: domain.Position{
+				X: state.Position.X + state.Direction.X*state.Velocity,
+				Y: state.Position.Y + state.Direction.Y*state.Velocity,
+			},
+			Direction: domain.Position{
+				X: math.Cos(newAngle),
+				Y: math.Sin(newAngle),
+			},
+			Velocity: limit(state.Velocity+(ctrl.Throttle*accelRate), 0, maxVelocity),
+			Sensors:  newSensors,
+			Crashed:  false,
 		},
-		Direction: domain.Position{
-			X: math.Cos(newAngle),
-			Y: math.Sin(newAngle),
-		},
-		Velocity: limit(state.Velocity+(ctrl.Throttle*accelRate), 0, maxVelocity),
-		Sensors:  newSensors,
-		Crashed:  false,
 	}
 }
 
 // Next proceeds to the next state
-func (engine Engine) Next() []domain.CarState {
+func (engine Engine) Next() []domain.Car {
 	// TODO: make parallel, is already threadsafe with mutex slice
-	nxt := make([]domain.CarState, len(engine.State))
+	nxt := make([]domain.Car, len(engine.State))
 	for idx := range engine.State {
 		nxt[idx] = engine.nextForIndex(idx)
 	}

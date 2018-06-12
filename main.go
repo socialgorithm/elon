@@ -1,9 +1,9 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"github.com/gorilla/websocket"
@@ -12,15 +12,20 @@ import (
 )
 
 var upgrader = websocket.Upgrader{}
-var simulation simulator.Simulation
+var simulation *simulator.Simulation
 
 func main() {
-	log.Println("Starting Elon Server")
-	simulation = simulator.CreateSimulation(5)
-	go simulator.Start()
+	var port = flag.String("port", "8080", "the port number to run on")
+	var test = flag.Bool("test", true, "whether the server should run in test mode")
+	simulation = simulator.CreateSimulation(1)
 
+	if *test {
+		go simulation.Start(*test)
+	}
+
+	log.Printf("Starting Elon Server on localhost:%s", *port)
 	http.HandleFunc("/", connectionHandler)
-	go http.ListenAndServe(":8080", nil)
+	go http.ListenAndServe(":"+*port, nil)
 
 	render.Render(simulation)
 }
@@ -44,15 +49,8 @@ func connectionHandler(w http.ResponseWriter, r *http.Request) {
 		message := strings.Split(messageStr, " ")
 
 		switch message[0] {
-		case "init":
-			carCount, err := strconv.Atoi(message[1])
-			if err != nil {
-				log.Println("Error:", err)
-				break
-			}
-			break
 		case "start":
-			go simulator.Start()
+			go simulation.Start(false)
 		}
 	}
 }

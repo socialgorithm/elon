@@ -84,7 +84,7 @@ func renderCar(carState domain.CarState) *imdraw.IMDraw {
 	// render car middle point
 	carRender.Color = colornames.Yellow
 	carRender.Push(
-		pixel.V(car.CarState.Position.X, car.CarState.Position.Y),
+		pixel.V(carState.Position.X, carState.Position.Y),
 	)
 	carRender.Circle(2, 0)
 

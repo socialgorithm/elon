@@ -13,24 +13,30 @@ import (
 
 var simulation Simulation
 
-// PrepareSimulation Prepares the state for a simulation, returning state and control channels
-func PrepareSimulation() Simulation {
+// CreateSimulation creates a new simulation
+func CreateSimulation(carCount int) *Simulation {
 	track := track.GenTrack()
-	carControlStateChannel := make(chan domain.CarControlState)
-	carStateChannel := make(chan []domain.CarState, 5)
-	return Simulation{
-		Track:                   track,
-		CarStatesChannel:        carStateChannel,
-		CarControlStateReceiver: carControlStateChannel,
-		Engine:                  physics.NewEngine(track, count),
+	return &Simulation{
+		Track:       track,
+		Cars:        make([]domain.Car, carCount),
+		CarsChannel: make(chan []domain.Car),
+		Engine:      physics.NewEngine(track, carCount),
 	}
 }
 
 // Start starts the physics engine (run this in goroutine to async, don't put in the method)
-func (simulation Simulation) Start() {
+func (simulation Simulation) Start(testMode bool) {
 	log.Println("Starting simulation")
 	for {
-		simulation.CarStatesChannel <- simulation.Engine.Next()
+		if testMode {
+			for idx := range simulation.Engine.State {
+				simulation.Engine.SetCtrl(
+					idx,
+					domain.CarControlState{Throttle: rand.Float64(), Steering: rand.Float64()},
+				)
+			}
+		}
+		simulation.CarsChannel <- simulation.Engine.Next()
 		time.Sleep(time.Second)
 	}
 }
