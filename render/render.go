@@ -2,6 +2,7 @@ package render
 
 import (
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/socialgorithm/elon-server/simulator"
@@ -13,13 +14,13 @@ import (
 )
 
 var simulation simulator.Simulation
-var carStates []domain.CarState
+var cars []domain.Car
 
 func update() {
 	for {
 		select {
-		case updatedCarStates := <-simulation.CarStatesChannel:
-			carStates = updatedCarStates
+		case updatedCars := <-simulation.CarsChannel:
+			cars = updatedCars
 		}
 	}
 }
@@ -50,9 +51,9 @@ func run() {
 		trackRender.Draw(win)
 
 		// update cars
-		if len(carStates) > 0 {
-			for i := 0; i < len(carStates); i++ {
-				carRender := renderCar(carStates[i])
+		if len(cars) > 0 {
+			for i := range cars {
+				carRender := renderCar(cars[i])
 				carRender.Draw(win)
 			}
 		}
@@ -71,6 +72,7 @@ func run() {
 
 // Render initiates the render loop
 func Render(_simulation simulator.Simulation) {
+	log.Println("Rendering simulation")
 	simulation = _simulation
 	go update()
 	pixelgl.Run(run)

@@ -2,6 +2,9 @@ package main
 
 import (
 	"log"
+	"net/http"
+	"strconv"
+	"strings"
 
 	"github.com/gorilla/websocket"
 	"github.com/socialgorithm/elon-server/render"
@@ -13,55 +16,43 @@ var simulation simulator.Simulation
 
 func main() {
 	log.Println("Starting Elon Server")
-	simulation = simulator.PrepareSimulation()
-	go func() {
-		start()
-	}()
+	simulation = simulator.CreateSimulation(5)
+	go simulator.Start()
+
+	http.HandleFunc("/", connectionHandler)
+	go http.ListenAndServe(":8080", nil)
+
 	render.Render(simulation)
 }
 
-// Start the server here
-func start() {
-	simulator.StartSimulation(simulation)
-	// http.HandleFunc("/simulate", newSimulationHandler)
-	// log.Fatal(http.ListenAndServe(":8080", nil))
+func connectionHandler(w http.ResponseWriter, r *http.Request) {
+	connection, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	defer connection.Close()
+
+	for {
+		_, data, err := connection.ReadMessage()
+		if err != nil {
+			log.Println("Error:", err)
+			break
+		}
+
+		messageStr := string(data[:])
+		message := strings.Split(messageStr, " ")
+
+		switch message[0] {
+		case "init":
+			carCount, err := strconv.Atoi(message[1])
+			if err != nil {
+				log.Println("Error:", err)
+				break
+			}
+			break
+		case "start":
+			go simulator.Start()
+		}
+	}
 }
-
-// physics.runTick(track Track, car Car) car Car {
-
-// }
-
-// func newSimulationHandler(w http.ResponseWriter, r *http.Request) {
-// 	connection, err := upgrader.Upgrade(w, r, nil)
-// 	if err != nil {
-// 		log.Println(err)
-// 		return
-// 	}
-// 	defer connection.Close()
-
-// 	simulator.StartSimulation(simulation)
-
-// 	go writeStateUpdatesToConnection(simulation.CarStateChannel, connection)
-// 	go writeControlUpdatesToReceiver(connection, simulation.CarControlStateReceiver)
-// }
-
-// func writeStateUpdatesToConnection(carStateChannel <-chan domain.CarState, connection *websocket.Conn) {
-// 	for {
-// 		newCarState := <-carStateChannel
-// 		newCarStateJSON, _ := json.Marshal(newCarState)
-// 		log.Printf("Car state changed: %s", newCarStateJSON)
-// 		connection.WriteMessage(websocket.TextMessage, newCarStateJSON)
-// 	}
-// }
-
-// func writeControlUpdatesToReceiver(connection *websocket.Conn, carControlStateChannel chan<- domain.CarControlState) {
-// 	defer close(carControlStateChannel)
-// 	for {
-// 		_, message, err := connection.ReadMessage()
-// 		if err != nil {
-// 			log.Println("Error:", err)
-// 			break
-// 		}
-// 		log.Printf("Received client message: %s", message)
-// 	}
-// }

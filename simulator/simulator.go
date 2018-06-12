@@ -1,12 +1,13 @@
 package simulator
 
 import (
+	"log"
 	"math"
 	"math/rand"
-	"runtime"
 	"time"
 
 	"github.com/socialgorithm/elon-server/domain"
+	"github.com/socialgorithm/elon-server/physics"
 	"github.com/socialgorithm/elon-server/track"
 )
 
@@ -21,15 +22,16 @@ func PrepareSimulation() Simulation {
 		Track:                   track,
 		CarStatesChannel:        carStateChannel,
 		CarControlStateReceiver: carControlStateChannel,
+		Engine:                  physics.NewEngine(track, count),
 	}
 }
 
-// StartSimulation starts the physics engine
-func StartSimulation(simulation Simulation) {
+// Start starts the physics engine (run this in goroutine to async, don't put in the method)
+func (simulation Simulation) Start() {
+	log.Println("Starting simulation")
 	for {
-		simulation.CarStatesChannel <- genRandomCarState()
+		simulation.CarStatesChannel <- simulation.Engine.Next()
 		time.Sleep(time.Second)
-		runtime.Gosched()
 	}
 }
 
