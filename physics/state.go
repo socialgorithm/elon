@@ -5,8 +5,8 @@ import (
 )
 
 const (
-	xHDim = 0.5 * xDim
-	yHDim = 0.5 * yDim
+	xHDim = 0.5 * XDim
+	yHDim = 0.5 * YDim
 )
 
 var (
@@ -14,9 +14,9 @@ var (
 )
 
 var (
-	sensorAngledRange = sinHalfPi * sensorRange
+	sensorAngledRange = sinHalfPi * SensorRange
 	minHDim           = math.Min(xHDim, yHDim)
-	dims              = [2]float64{xDim, yDim}
+	dims              = [2]float64{XDim, YDim}
 	dimsRect          = [2][2]float64{
 		{-xHDim, -yHDim},
 		{xHDim, yHDim},
@@ -28,7 +28,7 @@ var (
 	sensors = [5][2][2]float64{
 		{ // Left
 			{-xHDim, 0},
-			{-(xHDim + sensorRange), 0},
+			{-(xHDim + SensorRange), 0},
 		},
 		{ // Left-Centre
 			{-minHDim, minHDim},
@@ -36,7 +36,7 @@ var (
 		},
 		{ // Centre
 			{0, yHDim},
-			{0, yHDim + sensorRange},
+			{0, yHDim + SensorRange},
 		},
 		{ // Right-Centre
 			{minHDim, minHDim},
@@ -44,7 +44,7 @@ var (
 		},
 		{ // Right
 			{xHDim, 0},
-			{xHDim + sensorRange, 0},
+			{xHDim + SensorRange, 0},
 		},
 	}
 )
@@ -151,10 +151,10 @@ func (s *State) Update(p [][2][2]float64) (res [5]float64) {
 	}
 
 	// Angle
-	s.Angle = NormaliseRadians(s.Angle + (steeringRate * s.Steering))
+	s.Angle = NormaliseRadians(s.Angle + (SteeringRate * s.Steering))
 
 	// Velocity
-	s.Velocity = CapValue(s.Velocity+(accelerationRate*s.Throttle), 0, maxSpeed)
+	s.Velocity = CapValue(s.Velocity+(AccelerationRate*s.Throttle), 0, MaxVelocity)
 
 	res = sensorValues
 	return
