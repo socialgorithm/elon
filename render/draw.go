@@ -11,8 +11,16 @@ import (
 	"github.com/socialgorithm/elon-server/domain"
 )
 
+const (
+	halfPi float64 = 0.5 * math.Pi
+)
+
 func renderTrack(track domain.Track) *imdraw.IMDraw {
 	trackRender := imdraw.New(nil)
+
+	// Rotation matrix for the car rendering
+	//rotation := pixel.IM.Rotated(pixel.Vec{X: track.Center[0].X, Y: track.Center[0].Y}, halfPi)
+	//trackRender.SetMatrix(rotation)
 
 	// Draw road (not working for concave polygons)
 	//drawPolygon(trackRender, track.OuterSide, roadColor)
@@ -61,7 +69,7 @@ func renderCar(carState domain.CarState) *imdraw.IMDraw {
 	sensorUnitVector := pixel.Unit(-math.Pi / 2)
 
 	// Rotation matrix for the car rendering
-	rotation := pixel.Matrix.Rotated(pixel.IM, posVector, dirVector.Angle())
+	rotation := pixel.IM.Rotated(posVector, dirVector.Angle()+halfPi)
 	carRender.SetMatrix(rotation)
 
 	// render car fill
@@ -72,16 +80,16 @@ func renderCar(carState domain.CarState) *imdraw.IMDraw {
 	}
 
 	carRender.Push(
-		pixel.V(carState.Position.X-carWidth/2, carState.Position.Y),
-		pixel.V(carState.Position.X+carWidth/2, carState.Position.Y+carLength),
+		pixel.V(carState.Position.X-carWidth*.5, carState.Position.Y-carLength*.5),
+		pixel.V(carState.Position.X+carWidth*.5, carState.Position.Y+carLength*.5),
 	)
 	carRender.Rectangle(0)
 
 	// render car outline
 	carRender.Color = colornames.Black
 	carRender.Push(
-		pixel.V(carState.Position.X-carWidth/2, carState.Position.Y),
-		pixel.V(carState.Position.X+carWidth/2, carState.Position.Y+carLength),
+		pixel.V(carState.Position.X-carWidth*.5, carState.Position.Y-carLength*.5),
+		pixel.V(carState.Position.X+carWidth*.5, carState.Position.Y+carLength*.5),
 	)
 	carRender.Rectangle(1)
 
@@ -96,7 +104,7 @@ func renderCar(carState domain.CarState) *imdraw.IMDraw {
 	carRender.Color = colornames.Orange
 	for i := 0; i < len(carState.Sensors); i++ {
 		sensor := carState.Sensors[i]
-		sensorVector := sensorUnitVector.Scaled(sensor.Distance).Rotated(sensor.Angle)
+		sensorVector := sensorUnitVector.Scaled(sensor.Distance).Rotated(sensor.Angle + math.Pi)
 		carRender.Push(
 			pixel.V(carState.Position.X, carState.Position.Y),
 			pixel.V(carState.Position.X+sensorVector.X, carState.Position.Y+sensorVector.Y),
@@ -108,26 +116,26 @@ func renderCar(carState domain.CarState) *imdraw.IMDraw {
 	carRender.Color = colornames.Black
 	// top left
 	carRender.Push(
-		pixel.V(carState.Position.X-carWidth/2, carState.Position.Y+wheelOffset),
-		pixel.V(carState.Position.X-carWidth/2, carState.Position.Y+wheelOffset+wheelLength),
+		pixel.V(carState.Position.X-carWidth*.5, carState.Position.Y-carLength*.5+wheelOffset),
+		pixel.V(carState.Position.X-carWidth*.5, carState.Position.Y-carLength*.5+wheelOffset+wheelLength),
 	)
 	carRender.Line(wheelWidth)
 	// top right
 	carRender.Push(
-		pixel.V(carState.Position.X+carWidth/2, carState.Position.Y+wheelOffset),
-		pixel.V(carState.Position.X+carWidth/2, carState.Position.Y+wheelOffset+wheelLength),
+		pixel.V(carState.Position.X+carWidth*.5, carState.Position.Y-carLength*.5+wheelOffset),
+		pixel.V(carState.Position.X+carWidth*.5, carState.Position.Y-carLength*.5+wheelOffset+wheelLength),
 	)
 	carRender.Line(wheelWidth)
 	// bottom left
 	carRender.Push(
-		pixel.V(carState.Position.X-carWidth/2, carState.Position.Y+carLength-wheelOffset),
-		pixel.V(carState.Position.X-carWidth/2, carState.Position.Y+carLength-wheelOffset-wheelLength),
+		pixel.V(carState.Position.X-carWidth*.5, carState.Position.Y+carLength*.5-wheelOffset),
+		pixel.V(carState.Position.X-carWidth*.5, carState.Position.Y+carLength*.5-wheelOffset-wheelLength),
 	)
 	carRender.Line(wheelWidth)
 	// bottom right
 	carRender.Push(
-		pixel.V(carState.Position.X+carWidth/2, carState.Position.Y+carLength-wheelOffset),
-		pixel.V(carState.Position.X+carWidth/2, carState.Position.Y+carLength-wheelOffset-wheelLength),
+		pixel.V(carState.Position.X+carWidth*.5, carState.Position.Y+carLength*.5-wheelOffset),
+		pixel.V(carState.Position.X+carWidth*.5, carState.Position.Y+carLength*.5-wheelOffset-wheelLength),
 	)
 	carRender.Line(wheelWidth)
 	return carRender

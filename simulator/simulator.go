@@ -11,6 +11,10 @@ import (
 	"github.com/socialgorithm/elon-server/physics"
 )
 
+const (
+	delay = 250 * time.Millisecond
+)
+
 var simulation Simulation
 
 // CreateSimulation creates a new simulation
@@ -28,7 +32,7 @@ func (simulation Simulation) Start(testMode bool) {
 	log.Println("Starting simulation")
 	for {
 		simulation.CarsChannel <- simulation.Engine.Next()
-		time.Sleep(time.Second)
+		time.Sleep(delay)
 	}
 }
 

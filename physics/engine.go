@@ -67,7 +67,7 @@ func (engine Engine) nextForIndex(idx int) domain.Car {
 		Direction: domain.Position{X: uv[0], Y: uv[1]},
 		Velocity:  s.Velocity,
 		Sensors:   make([]domain.Sensor, 5),
-		Crashed:   false,
+		Crashed:   s.Crashed,
 	}
 
 	for idx, sa := range sensorAngles {

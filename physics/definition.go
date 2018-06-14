@@ -12,22 +12,22 @@ const (
 	TwoPi float64 = 2 * Pi
 
 	// SensorRange is the range of sensors
-	SensorRange = 5
+	SensorRange = 1000
 
 	// XDim is the x dimension of cars
-	XDim = 4
+	XDim = 15
 
 	// YDim is the y dimension of cars
-	YDim = 6
+	YDim = 30
 
 	// SteeringRate is the modifier for steering
-	SteeringRate = 0.25
+	SteeringRate = 0.05
 
 	// AccelerationRate is the modifier for acceleration
-	AccelerationRate = 0.25
+	AccelerationRate = 0.05
 
 	// MaxVelocity is the limit on velocity
-	MaxVelocity = 5
+	MaxVelocity = 1
 )
 
 var (

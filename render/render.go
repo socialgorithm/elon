@@ -47,6 +47,7 @@ func run() {
 
 	for !win.Closed() {
 		win.Clear(bgColor)
+
 		// redraw the track
 		trackRender.Draw(win)
 

@@ -1,6 +1,7 @@
 package physics
 
 import (
+	"log"
 	"math"
 )
 
@@ -61,8 +62,8 @@ type State struct {
 
 // Check checks whether a car has collided and its sensor values
 func (s State) Check(p [][2][2]float64) (bool, float64, [5]float64) {
-	sin := math.Sin(s.Angle)
-	cos := math.Cos(s.Angle)
+	sin := math.Sin(-s.Angle - (math.Pi * 1.5))
+	cos := math.Cos(-s.Angle - (math.Pi * 1.5))
 	rect := [2][2]float64{
 		{dimsRect[0][0], dimsRect[1][1]},
 		{dimsRect[1][0], dimsRect[1][1] + s.Velocity},
@@ -123,6 +124,8 @@ func (s State) Check(p [][2][2]float64) (bool, float64, [5]float64) {
 	for idx, sv := range sns {
 		sns[idx] = math.Sqrt(sv)
 	}
+
+	log.Println(sns)
 
 	return mn < sqrtMaxFloat64, mn, sns
 }
