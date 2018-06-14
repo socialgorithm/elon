@@ -9,14 +9,13 @@ import (
 	"github.com/faiface/pixel"
 	"github.com/socialgorithm/elon-server/domain"
 	"github.com/socialgorithm/elon-server/physics"
-	"github.com/socialgorithm/elon-server/track"
 )
 
 var simulation Simulation
 
 // CreateSimulation creates a new simulation
 func CreateSimulation(carCount int) *Simulation {
-	track := track.GenTrack()
+	track := ReadTrack()
 	return &Simulation{
 		Track:       track,
 		Cars:        genCars(carCount, track),

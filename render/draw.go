@@ -9,7 +9,6 @@ import (
 	"github.com/faiface/pixel"
 	imdraw "github.com/faiface/pixel/imdraw"
 	"github.com/socialgorithm/elon-server/domain"
-	trackConst "github.com/socialgorithm/elon-server/track"
 )
 
 func renderTrack(track domain.Track) *imdraw.IMDraw {
@@ -45,7 +44,7 @@ func drawStart(draw *imdraw.IMDraw, track domain.Track) {
 	vecA := first.Sub(startVec).Unit()
 	vecB := last.Sub(startVec).Unit()
 	angle := math.Acos(vecA.Dot(vecB))
-	lineVec := vecB.Rotated(angle / 2).Scaled(trackConst.RoadWidth)
+	lineVec := vecB.Rotated(angle / 2).Scaled(25)
 	draw.Push(
 		startVec.Add(lineVec),
 		startVec.Sub(lineVec),
