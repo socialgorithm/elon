@@ -9,7 +9,6 @@ import (
 // as they have different sources
 type Simulation struct {
 	Track       domain.Track
-	Cars        []domain.Car
 	CarsChannel chan []domain.Car
 	Engine      physics.Engine
 }

@@ -21,10 +21,10 @@ const (
 	YDim = 6
 
 	// SteeringRate is the modifier for steering
-	SteeringRate = 0.05
+	SteeringRate = 0.25
 
 	// AccelerationRate is the modifier for acceleration
-	AccelerationRate = 0.05
+	AccelerationRate = 0.25
 
 	// MaxVelocity is the limit on velocity
 	MaxVelocity = 5

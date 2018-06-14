@@ -36,7 +36,7 @@ func NewEngine(track domain.Track, count int) Engine {
 		engine.state[idx].Crashed = false
 		engine.state[idx].Angle = startAngle
 		engine.state[idx].Position = centre0
-		engine.state[idx].Velocity = 1
+		engine.state[idx].Velocity = 0
 		engine.state[idx].Steering = 0
 		engine.state[idx].Throttle = 0
 	}

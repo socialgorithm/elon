@@ -18,7 +18,6 @@ func CreateSimulation(carCount int) *Simulation {
 	track := ReadTrack()
 	return &Simulation{
 		Track:       track,
-		Cars:        genCars(carCount, track),
 		CarsChannel: make(chan []domain.Car),
 		Engine:      physics.NewEngine(track, carCount),
 	}
@@ -35,7 +34,7 @@ func (simulation Simulation) Start(testMode bool) {
 
 // Input add an input to the simulation
 func (simulation Simulation) Input(carIndex int, carControlState domain.CarControlState) {
-	simulation.Cars[carIndex].CarControlState = carControlState
+	simulation.Engine.SetCtrl(0, carControlState)
 }
 
 func genCars(carCount int, track domain.Track) []domain.Car {
