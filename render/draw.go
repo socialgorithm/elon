@@ -66,7 +66,12 @@ func renderCar(carState domain.CarState) *imdraw.IMDraw {
 	carRender.SetMatrix(rotation)
 
 	// render car fill
-	carRender.Color = carColor
+	if carState.Crashed != true {
+		carRender.Color = carColor
+	} else {
+		carRender.Color = carCrashedColor
+	}
+
 	carRender.Push(
 		pixel.V(carState.Position.X-carWidth/2, carState.Position.Y),
 		pixel.V(carState.Position.X+carWidth/2, carState.Position.Y+carLength),

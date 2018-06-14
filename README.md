@@ -12,16 +12,6 @@ go get github.com/go-gl/gl/v3.3-core/gl
 go get github.com/go-gl/mathgl/mgl32
 ```
 
-### GEOS
-
-You'll need the C library GEOS (used for some geometry calculations)
-
-After installing it (see below), get `gogeos`:
-
-```
-$ go get github.com/paulsmith/gogeos/geos
-```
-
 #### Ubuntu
 
 ```
@@ -37,6 +27,14 @@ $ brew install geos
 
 To start the server:
 
-`go run main.go`
+```
+$ go run main.go
+```
+
+To run the test client run:
+
+```
+$ go run client/main.go
+```
 
 By default the server runs in "test" mode, which spawns a simulation with 1 car and starts running the simulation clock.

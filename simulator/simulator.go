@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/faiface/pixel"
 	"github.com/socialgorithm/elon-server/domain"
 	"github.com/socialgorithm/elon-server/physics"
 	"github.com/socialgorithm/elon-server/track"
@@ -18,7 +19,7 @@ func CreateSimulation(carCount int) *Simulation {
 	track := track.GenTrack()
 	return &Simulation{
 		Track:       track,
-		Cars:        make([]domain.Car, carCount),
+		Cars:        genCars(carCount, track),
 		CarsChannel: make(chan []domain.Car),
 		Engine:      physics.NewEngine(track, carCount),
 	}
@@ -28,29 +29,33 @@ func CreateSimulation(carCount int) *Simulation {
 func (simulation Simulation) Start(testMode bool) {
 	log.Println("Starting simulation")
 	for {
-		if testMode {
-			for idx := range simulation.Engine.State {
-				simulation.Engine.SetCtrl(
-					idx,
-					domain.CarControlState{Throttle: rand.Float64(), Steering: rand.Float64()},
-				)
-			}
-		}
 		simulation.CarsChannel <- simulation.Engine.Next()
 		time.Sleep(time.Second)
 	}
 }
 
-func genRandomCarState() []domain.CarState {
-	carStates := make([]domain.CarState, 1, 1)
-	carStates[0] = domain.CarState{
-		Position:  domain.Position{X: rand.Float64() * 1024, Y: rand.Float64() * 740},
-		Direction: domain.Position{X: rand.Float64() - 0.5, Y: rand.Float64() - 0.5},
-		Velocity:  1,
-		// using 4 sensors for now
-		Sensors: genRandomSensorData(),
+// Input add an input to the simulation
+func (simulation Simulation) Input(carIndex int, carControlState domain.CarControlState) {
+	simulation.Cars[carIndex].CarControlState = carControlState
+}
+
+func genCars(carCount int, track domain.Track) []domain.Car {
+	cars := make([]domain.Car, carCount)
+	centre0 := pixel.V(track.Center[0].X, track.Center[0].Y)
+	centre1 := pixel.V(track.Center[1].X, track.Center[1].Y)
+	startAngle := centre1.Sub(centre0).Unit()
+	for i := range cars {
+		cars[i].CarState = domain.CarState{
+			Crashed:   false,
+			Position:  track.Center[0],
+			Direction: domain.Position{X: startAngle.X, Y: startAngle.Y},
+			Velocity:  0,
+			// using 4 sensors for now
+			Sensors: genRandomSensorData(),
+		}
 	}
-	return carStates
+
+	return cars
 }
 
 func genRandomSensorData() []domain.Sensor {

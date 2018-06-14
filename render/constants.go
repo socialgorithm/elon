@@ -16,4 +16,5 @@ var outerLinesColor = colornames.White
 var centerLineColor = colornames.Yellow
 var segmentColor = colornames.Red
 var carColor = colornames.Cyan
+var carCrashedColor = colornames.Red
 var startLineColor = colornames.Lightgrey
