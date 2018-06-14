@@ -12,17 +12,6 @@ go get github.com/go-gl/gl/v3.3-core/gl
 go get github.com/go-gl/mathgl/mgl32
 ```
 
-#### Ubuntu
-
-```
-$ apt-get install libgeos-dev
-```
-#### OS X - homebrew
-
-```
-$ brew install geos
-```
-
 ## Running
 
 To start the server:
