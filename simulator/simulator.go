@@ -29,7 +29,7 @@ func CreateSimulation(carCount int) *Simulation {
 func (simulation Simulation) Start(testMode bool) {
 	log.Println("Starting simulation")
 	for {
-		simulation.CarsChannel <- simulation.Engine.Next(simulation.Cars)
+		simulation.CarsChannel <- simulation.Engine.Next()
 		time.Sleep(time.Second)
 	}
 }
