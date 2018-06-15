@@ -15,19 +15,19 @@ const (
 	SensorRange = 1000
 
 	// XDim is the x dimension of cars
-	XDim = 15
+	XDim = 19
 
 	// YDim is the y dimension of cars
-	YDim = 30
+	YDim = 34
 
 	// SteeringRate is the modifier for steering
-	SteeringRate = 0.05
+	SteeringRate = 0.025
 
 	// AccelerationRate is the modifier for acceleration
-	AccelerationRate = 0.05
+	AccelerationRate = 0.03
 
 	// MaxVelocity is the limit on velocity
-	MaxVelocity = 1
+	MaxVelocity = 1.5
 )
 
 var (

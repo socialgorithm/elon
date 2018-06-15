@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	delay = 250 * time.Millisecond
+	delay = (1000 / 30) * time.Millisecond
 )
 
 var simulation Simulation
