@@ -1,7 +1,6 @@
 package physics
 
 import (
-	"log"
 	"math"
 )
 
@@ -125,8 +124,6 @@ func (s State) Check(p [][2][2]float64) (bool, float64, [5]float64) {
 		sns[idx] = math.Sqrt(sv)
 	}
 
-	log.Println(sns)
-
 	return mn < sqrtMaxFloat64, mn, sns
 }
 
@@ -154,7 +151,7 @@ func (s *State) Update(p [][2][2]float64) (res [5]float64) {
 	}
 
 	// Angle
-	s.Angle = NormaliseRadians(s.Angle + (SteeringRate * s.Steering))
+	s.Angle = NormaliseRadians(s.Angle - (SteeringRate * s.Steering))
 
 	// Velocity
 	s.Velocity = CapValue(s.Velocity+(AccelerationRate*s.Throttle), 0, MaxVelocity)
