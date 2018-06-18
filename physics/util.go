@@ -6,6 +6,11 @@ import (
 	"github.com/socialgorithm/elon-server/domain"
 )
 
+const (
+	onePercentOfVelocity        = MaxVelocity * 0.005
+	oneOverOnePercentOfVelocity = 1 / onePercentOfVelocity
+)
+
 // NormaliseRadians normalises radians between 0 and 2Pi
 func NormaliseRadians(t float64) float64 {
 	return t - (math.Floor(t/TwoPi) * TwoPi)
@@ -24,4 +29,9 @@ func DPosToVec2(p domain.Position) [2]float64 {
 // AngleToUnitVec2 converts an angle to a unit vector
 func AngleToUnitVec2(t float64) [2]float64 {
 	return [2]float64{math.Cos(t), math.Sin(t)}
+}
+
+// RoundVelocity rounds to the nearest 1% of max velocity
+func RoundVelocity(v float64) float64 {
+	return onePercentOfVelocity * math.Floor(v*oneOverOnePercentOfVelocity)
 }

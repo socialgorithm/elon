@@ -25,6 +25,10 @@ var (
 		{-xHDim, yHDim},
 		{xHDim, yHDim},
 	}
+	dimsBSeg = [2][2]float64{
+		{-xHDim, -yHDim},
+		{xHDim, -yHDim},
+	}
 	sensors = [5][2][2]float64{
 		{ // Left
 			{-xHDim, 0},
@@ -59,21 +63,50 @@ type State struct {
 	Crashed  bool
 }
 
+func (s State) forwardRect() (rect, rectLSeg, rectRSeg [2][2]float64) {
+	rect = [2][2]float64{
+		{dimsRect[0][0], dimsRect[1][1]},
+		{dimsRect[1][0], dimsRect[1][1] + s.Velocity},
+	}
+	rectLSeg = [2][2]float64{
+		{dimsRect[0][0], dimsRect[1][1]},
+		{dimsRect[0][0], dimsRect[1][1] + s.Velocity},
+	}
+	rectRSeg = [2][2]float64{
+		{dimsRect[1][0], dimsRect[1][1]},
+		{dimsRect[1][0], dimsRect[1][1] + s.Velocity},
+	}
+	return
+}
+
+func (s State) backwardRect() (rect, rectLSeg, rectRSeg [2][2]float64) {
+	rect = [2][2]float64{
+		{dimsRect[0][0], dimsRect[0][1] + s.Velocity},
+		{dimsRect[1][0], dimsRect[0][1]},
+	}
+	rectLSeg = [2][2]float64{
+		{dimsRect[0][0], dimsRect[0][1]},
+		{dimsRect[0][0], dimsRect[0][1] + s.Velocity},
+	}
+	rectRSeg = [2][2]float64{
+		{dimsRect[1][0], dimsRect[0][1]},
+		{dimsRect[1][0], dimsRect[0][1] + s.Velocity},
+	}
+	return
+}
+
 // Check checks whether a car has collided and its sensor values
 func (s State) Check(p [][2][2]float64) (bool, float64, [5]float64) {
 	sin := math.Sin(-s.Angle - (math.Pi * 1.5))
 	cos := math.Cos(-s.Angle - (math.Pi * 1.5))
-	rect := [2][2]float64{
-		{dimsRect[0][0], dimsRect[1][1]},
-		{dimsRect[1][0], dimsRect[1][1] + s.Velocity},
-	}
-	rectLSeg := [2][2]float64{
-		{dimsRect[0][0], dimsRect[1][1]},
-		{dimsRect[0][0], dimsRect[1][1] + s.Velocity},
-	}
-	rectRSeg := [2][2]float64{
-		{dimsRect[1][0], dimsRect[1][1]},
-		{dimsRect[1][0], dimsRect[1][1] + s.Velocity},
+
+	var rect, rectLSeg, rectRSeg, tSeg [2][2]float64
+	if s.Velocity < 0 {
+		rect, rectLSeg, rectRSeg = s.backwardRect()
+		tSeg = dimsBSeg
+	} else {
+		rect, rectLSeg, rectRSeg = s.forwardRect()
+		tSeg = dimsFSeg
 	}
 
 	mn := math.MaxFloat64
@@ -94,19 +127,19 @@ func (s State) Check(p [][2][2]float64) (bool, float64, [5]float64) {
 			cn1 := RectContains(rect, act[1])
 
 			if cn0 {
-				mn = math.Min(mn, SegDistanceToSq(dimsFSeg, act[0]))
+				mn = math.Min(mn, SegDistanceToSq(tSeg, act[0]))
 			}
 
 			if cn1 {
-				mn = math.Min(mn, SegDistanceToSq(dimsFSeg, act[1]))
+				mn = math.Min(mn, SegDistanceToSq(tSeg, act[1]))
 			}
 
 			if !cn0 || !cn1 {
 				for _, in := range SegIntersections(rectLSeg, act) {
-					mn = math.Min(mn, SegDistanceToSq(dimsFSeg, in))
+					mn = math.Min(mn, SegDistanceToSq(tSeg, in))
 				}
 				for _, in := range SegIntersections(rectRSeg, act) {
-					mn = math.Min(mn, SegDistanceToSq(dimsFSeg, in))
+					mn = math.Min(mn, SegDistanceToSq(tSeg, in))
 				}
 			}
 		}
@@ -151,10 +184,10 @@ func (s *State) Update(p [][2][2]float64) (res [5]float64) {
 	}
 
 	// Angle
-	s.Angle = NormaliseRadians(s.Angle - (SteeringRate * s.Steering))
+	s.Angle = NormaliseRadians(s.Angle - (s.Velocity * velocityFactoryRange * SteeringRate * s.Steering))
 
 	// Velocity
-	s.Velocity = CapValue(s.Velocity+(AccelerationRate*s.Throttle), 0, MaxVelocity)
+	s.Velocity = RoundVelocity(CapValue((frictionMultiplier*s.Velocity)+(AccelerationRate*s.Throttle), -MaxReverseVelocity, MaxVelocity))
 
 	res = sensorValues
 	return
