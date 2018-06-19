@@ -12,3 +12,8 @@ type Simulation struct {
 	CarsChannel chan []domain.Car
 	Engine      physics.Engine
 }
+
+const (
+	// SimulationRestart Control signal to restart a simulation
+	SimulationRestart int = 0
+)
