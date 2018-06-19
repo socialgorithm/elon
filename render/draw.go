@@ -64,14 +64,16 @@ func renderCar(car domain.Car) *imdraw.IMDraw {
 	carRender := imdraw.New(nil)
 
 	// Prepare some vectors
-	carCenter := pixel.V(car.CarState.Position.X-carWidth*.5, car.CarState.Position.Y-carLength*.5)
 	posVector := pixel.V(car.CarState.Position.X, car.CarState.Position.Y)
 	dirVector := pixel.V(car.CarState.Direction.X, car.CarState.Direction.Y)
 
-	// Rotation matrix for the car rendering
+	// Set coordinate system to the car center and rotation
 	rotationAngle := dirVector.Angle() + halfPi
-	rotation := pixel.IM.Rotated(posVector, dirVector.Angle()+halfPi)
+	rotation := pixel.IM.Moved(posVector).Rotated(posVector, dirVector.Angle()+halfPi)
 	carRender.SetMatrix(rotation)
+
+	// Vectors adjusted to new coordinate system
+	carCenter := pixel.V(-carWidth*.5, -carLength*.5)
 
 	// Sensor vectors
 	sensorUnitVector := pixel.Unit(math.Pi / 2)            // unit vector pointing forward from the car
@@ -86,7 +88,7 @@ func renderCar(car domain.Car) *imdraw.IMDraw {
 
 	carRender.Push(
 		carCenter,
-		pixel.V(car.CarState.Position.X+carWidth*.5, car.CarState.Position.Y+carLength*.5),
+		pixel.V(carWidth*.5, carLength*.5),
 	)
 	carRender.Rectangle(0)
 
@@ -94,7 +96,7 @@ func renderCar(car domain.Car) *imdraw.IMDraw {
 	carRender.Color = colornames.Black
 	carRender.Push(
 		carCenter,
-		pixel.V(car.CarState.Position.X+carWidth*.5, car.CarState.Position.Y+carLength*.5),
+		pixel.V(carWidth*.5, carLength*.5),
 	)
 	carRender.Rectangle(1)
 
@@ -131,31 +133,29 @@ func renderWheels(car domain.Car, initialMatrix pixel.Matrix, rotationAngle floa
 		[3]float64{+1, +1, -1}, // bottom right
 	}
 
+	carRender.Color = colornames.Black
+
 	for i := 0; i < len(wheelPositions); i++ {
 		wheelData := wheelPositions[i]
+		// prepare all vectors
 		wheelCenter := pixel.V(
-			car.CarState.Position.X+wheelData[0]*carWidth*.5,
-			car.CarState.Position.Y+wheelData[1]*carLength*.5+wheelData[2]*wheelOffset,
-		).Add(pixel.V(0, wheelData[2]*wheelLength/2))
-		carRender.Color = colornames.Black
-		wheelMatrix := pixel.IM.Moved(wheelCenter).Rotated(wheelCenter, rotationAngle)
-		absoluteCenter := pixel.V(0, 0)
-		if i < 2 {
-			// front 2 wheels - ugly, whether the wheels turn should be a param somewhere
-			wheelMatrix = wheelMatrix.Rotated(wheelCenter, car.CarControlState.Steering*maxWheelSteering)
-		}
-		carRender.SetMatrix(wheelMatrix)
+			wheelData[0]*carWidth*.5,
+			wheelData[1]*carLength*.5+wheelData[2]*wheelOffset+wheelData[2]*wheelLength/2,
+		)
 		lengthVec := pixel.V(0, wheelLength/2)
+		// wheelMatrix := initialMatrix.Moved(wheelCenter)
+		// if i < 2 {
+		// 	// front 2 wheels - ugly, whether the wheels turn should be a param somewhere
+		// 	wheelMatrix = wheelMatrix.Rotated(wheelCenter, -car.CarControlState.Steering*maxWheelSteering)
+		// }
+		// carRender.SetMatrix(wheelMatrix)
 		carRender.Push(
-			absoluteCenter.Add(lengthVec),
-			absoluteCenter.Sub(lengthVec),
+			wheelCenter.Add(lengthVec),
+			wheelCenter.Sub(lengthVec),
 		)
 		carRender.Line(wheelWidth)
-		carRender.Color = colornames.Red
-		carRender.Push(absoluteCenter)
-		carRender.Circle(1, 0)
-		// reset the matrix
-		carRender.SetMatrix(initialMatrix)
+		// // reset the matrix
+		// carRender.SetMatrix(initialMatrix)
 	}
 }
 

@@ -44,7 +44,6 @@ func run() {
 	)
 
 	trackRender := renderTrack(simulation.Track)
-	camZoom := 1.8
 
 	for !win.Closed() {
 		win.Clear(bgColor)
@@ -54,7 +53,7 @@ func run() {
 			cars[0].CarState.Position.X,
 			cars[0].CarState.Position.Y,
 		)
-		cam := pixel.IM.Scaled(camPos, camZoom).Moved(win.Bounds().Center().Sub(camPos))
+		cam := pixel.IM.Scaled(camPos, zoom).Moved(win.Bounds().Center().Sub(camPos))
 		win.SetMatrix(cam)
 
 		// redraw the track

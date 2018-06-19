@@ -14,6 +14,7 @@ const wheelOffset = carLength / 7
 const wheelLength = carLength / 4
 const wheelWidth = 3
 const maxWheelSteering = math.Pi / 4
+const zoom = 2.0
 
 var bgColor = colornames.Green
 var roadColor = colornames.Gray
