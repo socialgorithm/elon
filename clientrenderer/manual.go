@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/socialgorithm/elon-server/domain"
+	"github.com/socialgorithm/elon-server/simulator"
 
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/pixelgl"
@@ -12,11 +13,12 @@ import (
 )
 
 var inputs chan domain.CarControlState
+var simulationControl chan int
 
 func run() {
 	cfg := pixelgl.WindowConfig{
 		Title:  "Elon Manual Driver - Socialgorithm",
-		Bounds: pixel.R(0, 0, 400, 200),
+		Bounds: pixel.R(0, 0, 300, 200),
 		VSync:  true,
 	}
 	win, err := pixelgl.NewWindow(cfg)
@@ -50,6 +52,11 @@ func run() {
 			throttle = 1
 		}
 
+		// Control sequences
+		if win.Pressed(pixelgl.KeyR) {
+			simulationControl <- simulator.SimulationRestart
+		}
+
 		carControlState := domain.CarControlState{
 			Steering: float64(steering),
 			Throttle: float64(throttle),
@@ -72,7 +79,8 @@ func run() {
 }
 
 // Manual initiates the render loop
-func Manual(_inputs chan domain.CarControlState) {
+func Manual(_inputs chan domain.CarControlState, _simulationControl chan int) {
 	inputs = _inputs
+	simulationControl = _simulationControl
 	pixelgl.Run(run)
 }

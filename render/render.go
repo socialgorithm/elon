@@ -48,13 +48,21 @@ func run() {
 	for !win.Closed() {
 		win.Clear(bgColor)
 
+		// follow top car with camera and zoom
+		camPos := pixel.V(
+			cars[0].CarState.Position.X,
+			cars[0].CarState.Position.Y,
+		)
+		cam := pixel.IM.Scaled(camPos, zoom).Moved(win.Bounds().Center().Sub(camPos))
+		win.SetMatrix(cam)
+
 		// redraw the track
 		trackRender.Draw(win)
 
 		// update cars
 		if len(cars) > 0 {
 			for i := range cars {
-				carRender := renderCar(cars[i].CarState)
+				carRender := renderCar(cars[i])
 				carRender.Draw(win)
 			}
 		}

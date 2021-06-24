@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -16,14 +17,16 @@ import (
 
 var upgrader = websocket.Upgrader{}
 var simulation *simulator.Simulation
+var isTest = false
 
 func main() {
 	var port = flag.String("port", "8080", "the port number to run on")
 	var test = flag.Bool("test", true, "whether the server should run in test mode")
+	isTest = *test
 	simulation = simulator.CreateSimulation(1)
 
-	if *test {
-		go simulation.Start(*test)
+	if isTest {
+		go simulation.Start(isTest)
 	}
 
 	log.Printf("Starting Elon Server on localhost:%s", *port)
@@ -53,7 +56,7 @@ func connectionHandler(w http.ResponseWriter, r *http.Request) {
 
 		switch message[0] {
 		case "start":
-			go simulation.Start(false)
+			go simulation.Start(isTest)
 			break
 		case "input":
 			steering, _ := strconv.ParseFloat(message[1], 64)
@@ -64,6 +67,16 @@ func connectionHandler(w http.ResponseWriter, r *http.Request) {
 				Throttle: throttle,
 			}
 			go simulation.Input(0, carControlState)
+			break
+		case "control":
+			signal, err := strconv.Atoi(message[1])
+			if err != nil {
+				fmt.Printf("Received invalid signal %s\n", message[1])
+				break
+			}
+			if signal == simulator.SimulationRestart {
+				simulation.Restart()
+			}
 		}
 	}
 }

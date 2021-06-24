@@ -10,13 +10,18 @@ import (
 	"github.com/socialgorithm/elon-server/domain"
 )
 
-var inputs = make(chan domain.CarControlState)
+var carControlChannel = make(chan domain.CarControlState)
+var simulationControlChannel = make(chan int)
 
 func update(connection *websocket.Conn) {
 	for {
 		select {
-		case carControlState := <-inputs:
+		case carControlState := <-carControlChannel:
 			message := fmt.Sprintf("input %f %f", carControlState.Steering, carControlState.Throttle)
+			connection.WriteMessage(websocket.TextMessage, []byte(message))
+		case simulationControl := <-simulationControlChannel:
+			message := fmt.Sprintf("control %d", simulationControl)
+			fmt.Println(message)
 			connection.WriteMessage(websocket.TextMessage, []byte(message))
 		}
 	}
@@ -39,9 +44,9 @@ func main() {
 	go update(connection)
 
 	if test {
-		clientrenderer.Manual(inputs)
+		clientrenderer.Manual(carControlChannel, simulationControlChannel)
 	} else {
-		// clientrenderer.ExternalProcess()
+		// externalClient.Process()
 	}
 
 	log.Println("Closing connection")
